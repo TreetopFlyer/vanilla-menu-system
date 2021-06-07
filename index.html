@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            [data-open]
+            {
+                height:0px;
+                overflow: hidden;
+                transition: height 0.8s, width 0.4s;
+            }
+            [data-open='true'][data-move='false']
+            {
+                height: auto !important;
+                overflow: visible;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+        <button class="Outer">+/-</button>
+        <ul class="Outer">
+            <li>a</li>
+            <li>b</li>
+            <li>
+                <button class="Inner">+/-</button>
+                <ul class="Inner" data-open="false">
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                    <li>@</li>
+                </ul>
+            </li>
+            <li>d</li>
+            <li>e</li>
+            <li>f</li>
+        </ul>
+        <script>
+            function Transition(inElement, inMode, inAttrOpen, inAttrMove)
+            {
+                var stateOpen, stateMove;
+                var handleTick, handleDone;
+                var attrOpen, attrMove;
+
+                attrOpen  = inAttrOpen || "data-open";
+                attrMove  = inAttrMove || "data-move";
+                stateOpen = inElement.getAttribute(attrOpen) != "false";
+                stateMove = inElement.getAttribute(attrMove) == "true";
+
+                if (inMode == undefined){ inMode = !stateOpen; }
+                if (inMode == stateOpen){ return; }
+
+                handleTick = function(inEvent){ inElement.style.height = (inMode ? inElement.scrollHeight : 0) + "px"; };
+                handleDone = function(inEvent){ inEvent.target.setAttribute(attrMove, false); inEvent.target.removeEventListener("transitionend", handleDone); };
+
+                inElement.style.height = inElement.getBoundingClientRect().height + "px"; // 1) forcibly set the element's css-declared height to its currently displayed height
+                inElement.setAttribute(attrMove, true); // 2) enable transitions
+                inElement.setAttribute(attrOpen, inMode); // 3) update "state"
+                setTimeout(handleTick, 30); // 4) after transitions have been enabled, set a new height (inside handler)
+                if (!stateMove){ inElement.addEventListener("transitionend", handleDone); } // 5) if a done handler is not in place, set one up
+            }
+
+            ///////
+            var elButtonOuter, elButtonInner, elMenuOuter, elMenuInner;
+
+            elButtonOuter = document.querySelector("button.Outer");
+            elButtonInner = document.querySelector("button.Inner");
+            elMenuOuter   = document.querySelector("ul.Outer");
+            elMenuInner   = document.querySelector("ul.Inner");
+
+            elButtonOuter.addEventListener("click", function(inEvent){ Transition(elMenuOuter); });
+            elButtonInner.addEventListener("click", function(inEvent){ Transition(elMenuInner); });
+
+        </script>
+        </div>
+    </body>
+</html>
