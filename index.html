@@ -2,79 +2,146 @@
 <html>
     <head>
         <style>
-            [data-open]
-            {
-                height:0px;
-                overflow: hidden;
-                transition: height 0.8s, width 0.4s;
-            }
-            [data-open='true'][data-move='false']
-            {
-                height: auto !important;
-                overflow: visible;
-            }
         </style>
     </head>
     <body>
-        <div>
-        <button class="Outer">+/-</button>
-        <ul class="Outer">
-            <li>a</li>
-            <li>b</li>
-            <li>
-                <button class="Inner">+/-</button>
-                <ul class="Inner" data-open="false">
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
-                    <li>@</li>
+
+        <ul>
+            <li class="Branch Branch--Root">
+                <span>Programs</span>
+                <ul>
+                    <li><a>Latest</a></li>
+                    <li><a>Archives</a></li>
+                    <li class="Branch">
+                        <span>Radio</span>
+                        <ul>
+                            <li><a>Station Finder  </a></li>
+                            <li><a>For Broadcasters</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li>d</li>
-            <li>e</li>
-            <li>f</li>
+            <li class="Branch Branch--Root">
+                <span>Sermons</span>
+                <ul>
+                    <li><a href="">Latest</a></li>
+                    <li class="Branch">
+                        <span>Browse By</span>
+                        <ul>
+                            <li><a>Topic</a></li>
+                            <li><a>Series</a></li>
+                            <li><a>Scripture</a></li>
+                            <li><a>Date</a></li>
+                            <li><a>Transcript</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
         </ul>
+
         <script>
-            function Transition(inElement, inMode, inAttrOpen, inAttrMove)
+            function Transition(inElement, inTime, inMode, inRefs, inAttrOpen, inAttrMove)
             {
                 var stateOpen, stateMove;
-                var handleTick, handleDone;
+                var handleTick, handleDone, handleUser;
                 var attrOpen, attrMove;
+                var refs;
+                var setRefs, setStyle;
 
+                refs = inRefs || [];
+                refs.push(inElement);
                 attrOpen  = inAttrOpen || "data-open";
                 attrMove  = inAttrMove || "data-move";
                 stateOpen = inElement.getAttribute(attrOpen) != "false";
                 stateMove = inElement.getAttribute(attrMove) == "true";
 
-                if (inMode == undefined){ inMode = !stateOpen; }
-                if (inMode == stateOpen){ return; }
+                setRefs = function(inKey, inValue)
+                {
+                    refs.forEach(function(inRef)
+                    {
+                        inRef.setAttribute(inKey, inValue);
+                    });
+                }
+                setStyle = function(inHeight, inOverflow, inTransition)
+                {
+                    inElement.style.height = inHeight;
+                    inElement.style.overflow = inOverflow;
+                    inElement.style.transition = inTransition;
+                };
 
+                handleUser = function(){};
                 handleTick = function(inEvent){ inElement.style.height = (inMode ? inElement.scrollHeight : 0) + "px"; };
-                handleDone = function(inEvent){ inEvent.target.setAttribute(attrMove, false); inEvent.target.removeEventListener("transitionend", handleDone); };
+                handleDone = function(inEvent)
+                {
+                    setRefs(attrMove, false);
+                    inElement.removeEventListener("transitionend", handleDone);
+                    if(inMode)
+                    {
+                        setStyle("auto", "visible", "");
+                    }
+                    handleUser(inMode, inElement);
+                };
 
-                inElement.style.height = inElement.getBoundingClientRect().height + "px"; // 1) forcibly set the element's css-declared height to its currently displayed height
-                inElement.setAttribute(attrMove, true); // 2) enable transitions
-                inElement.setAttribute(attrOpen, inMode); // 3) update "state"
-                setTimeout(handleTick, 30); // 4) after transitions have been enabled, set a new height (inside handler)
-                if (!stateMove){ inElement.addEventListener("transitionend", handleDone); } // 5) if a done handler is not in place, set one up
+                if (inMode == null){ inMode = !stateOpen; }
+                if (inMode != stateOpen)
+                {
+                    setStyle(inElement.getBoundingClientRect().height+"px", "hidden", "height "+inTime+"s");// 1) forcibly set the element's css-declared height to its currently displayed height
+                    setRefs(attrOpen, inMode); // 2) update "state"
+                    setRefs(attrMove, true); // 3) enable transitions
+
+                    if(inTime)
+                    {
+                        if (!stateMove){ inElement.addEventListener("transitionend", handleDone); } // 4) if a done handler is not in place, set one up
+                        setTimeout(handleTick); // 5) after transitions have been enabled, set a new height (inside handler)
+                    }
+                    else
+                    {
+                        handleTick();
+                        handleDone();
+                    }
+                }
+                return function(inDone){handleUser = inDone;}
             }
-
-            ///////
-            var elButtonOuter, elButtonInner, elMenuOuter, elMenuInner;
-
-            elButtonOuter = document.querySelector("button.Outer");
-            elButtonInner = document.querySelector("button.Inner");
-            elMenuOuter   = document.querySelector("ul.Outer");
-            elMenuInner   = document.querySelector("ul.Inner");
-
-            elButtonOuter.addEventListener("click", function(inEvent){ Transition(elMenuOuter); });
-            elButtonInner.addEventListener("click", function(inEvent){ Transition(elMenuInner); });
-
         </script>
-        </div>
+        <script>
+            function Menu(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu)
+            {
+                function collapseChildren(inMode, inMenu)
+                {
+                    if(!inMode)
+                    {
+                        inMenu.querySelectorAll(inSelectorMenu).forEach(sub => Transition(sub, 0, false));
+                    }
+                }
+
+                document.addEventListener("click", function(e)
+                {
+                    document.querySelectorAll(inSelectorRoot).forEach(root=>
+                    {
+                        if(!root.contains(e.target))
+                        {
+                            Transition(root.querySelector(inSelectorMenu), 0.4, false)(collapseChildren);
+                        }
+                    });
+                });
+
+                
+                document.querySelectorAll(inSelectorBranch).forEach(branch=>
+                {
+                    var button, menu;
+                    
+                    menu = branch.querySelector(inSelectorMenu);
+                    Transition(menu, 0, false);
+                    button = branch.querySelector(inSelectorButton);
+                    button.addEventListener("click", e =>
+                    {
+                        Transition(menu, 0.4, null)(collapseChildren);
+                    });
+                });
+            }
+        </script>
+        <script>
+            Menu(".Branch--Root", ".Branch", ".Branch>span", ".Branch>ul");
+        </script>
     </body>
 </html>
