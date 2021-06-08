@@ -2,102 +2,112 @@
 <html>
     <head>
         <style>
-            ul, li, span, a
+            ul, li, a
             {
-                display:block;
+                display: block;
                 margin:0;
                 padding:0;
                 border:0;
-                list-style-type: none;
-                white-space: nowrap;
             }
-            ul
+            .Branch__Button
             {
-                background:lightgrey;
-                border-radius:5px;
-            }
-            a
-            {
-                padding:10px;
-            }
-            span
-            {
-                padding:5px 10px 5px 10px;
-                background:#555;
-                border-radius:5px;
+                background:black;
                 color:white;
-                font-weight:900;
-                transition:background-color 0.5s;
             }
-            span[data-menu-open='true'], span[data-menu-move='true']
+            .Branch__Menu
             {
-                background-color: orange;
+                display:block;
             }
-            span:before
+
+            .Branch--Tier0 ul
             {
-                display:inline-block;
-                width:20px;
-                height:20px;
-                content:"+";
+                padding:0 0 20px 20px;
+                background:orange;
             }
-            span[data-menu-open='true']:before
+            .Branch--Tier0 li:last-child ul
             {
-                content:"-";
+                padding-bottom: 0;
             }
-            .Branch--Root
-            {
-                position: relative;
-                display:inline-block;
-            }
-            .Branch--Root > ul
-            {
-                position:absolute;
-                top:100%;
-            }
+
         </style>
     </head>
     <body>
-
-        <ul>
-            <li class="Branch Branch--Root">
-                <span>Programs</span>
-                <ul>
-                    <li><a>Latest</a></li>
-                    <li><a>Archives</a></li>
-                    <li class="Branch">
-                        <span>Radio</span>
+        <style>
+            #sizer
+            {
+                padding:20px;
+                margin:10px;
+                background:yellow;
+                border:5px solid black;
+            }
+        </style>
+        <div id="sizer">
+            <p>yikes</p>
+        </div>
+        <nav>
+            <ul>
+                <li class="Branch Branch--Root Branch--Tier0">
+                    <span class="Branch__Button">Programs</span>
+                    <span class="Branch__Menu">
                         <ul>
-                            <li><a>Station Finder  </a></li>
-                            <li><a>For Broadcasters</a></li>
-                        </ul>
-                    </li>
-                    <li class="Branch">
-                        <span>paragraph test</span>
-                        <ul>
-                            <li>
-                                really really really really really 
+                            <li><a>Latest</a></li>
+                            <li><a>Archives</a></li>
+                            <li class="Branch Branch--Tier1">
+                                <span class="Branch__Button">Radio</span>
+                                <span class="Branch__Menu">
+                                    <ul>
+                                        <li><a>Station Finder  </a></li>
+                                        <li><a>For Broadcasters</a></li>
+                                    </ul>
+                                </span>
+                            </li>
+                            <li class="Branch Branch--Tier1">
+                                <span class="Branch__Button">paragraph test</span>
+                                <span class="Branch__Menu">
+                                    <ul>
+                                        <li>
+                                            <a>really really really really really long</a>
+                                        </li>
+                                    </ul>
+                                </span>
                             </li>
                         </ul>
-                    </li>
-                </ul>
-            </li>
-            <li class="Branch Branch--Root">
-                <span>Sermons</span>
-                <ul>
-                    <li><a href="">Latest</a></li>
-                    <li class="Branch">
-                        <span>Browse By</span>
+                    </span>
+                </li>
+                <li class="Branch Branch--Root Branch--Tier0">
+                    <span class="Branch__Button">Sermons</span>
+                    <span class="Branch__Menu">
                         <ul>
-                            <li><a>Topic</a></li>
-                            <li><a>Series</a></li>
-                            <li><a>Scripture</a></li>
-                            <li><a>Date</a></li>
-                            <li><a>Transcript</a></li>
+                            <li><a>Latest</a></li>
+                            <li class="Branch Branch--Tier0">
+                                <span class="Branch__Button">Browse By</span>
+                                <span class="Branch__Menu">
+                                    <ul>
+                                        <li><a>Topic</a></li>
+                                        <li><a>Series</a></li>
+                                        <li><a>Scripture</a></li>
+                                        <li><a>Date</a></li>
+                                        <li><a>Transcript</a></li>
+                                    </ul>
+                                </span>
+                            </li>
                         </ul>
-                    </li>
-                </ul>
-            </li>
-        </ul>
+                    </span>
+                </li>
+                <li>
+                    <a>Blog</a>
+                </li>
+                <li>
+                    <a>More</a>
+                </li>
+                <li>
+                    <a>Store</a>
+                </li>
+                <li>
+                    <span>Donate</span>
+                </li>
+            </ul>
+        </nav>
 
         <script>
             function Transition(inElement, inTime, inMode, inRefs, inAttrOpen, inAttrMove)
@@ -139,7 +149,7 @@
                 if (inMode == null){ inMode = !stateOpen; }
                 if (inMode != stateOpen)
                 {
-                    setStyle(inElement.scrollHeight+"px", "hidden", "height "+inTime+"s");// 1) forcibly set the element's css-declared height to its currently displayed height
+                    setStyle(inElement.offsetHeight+"px", "hidden", "all "+inTime+"s", "0px");// 1) forcibly set the element's css-declared height to its currently displayed height
                     setRefs(attrOpen, inMode); // 2) update "state"
                     setRefs(attrMove, true); // 3) enable transitions
 
@@ -184,13 +194,13 @@
                 {
                     document.querySelectorAll(inSelectorRoot).forEach(root=>
                     {
-                        if(!root.contains(e.target)){ transitionBranch(root, 0.2, false, true); }
+                        if(!root.contains(e.target)){ transitionBranch(root, 0.4, false, true); }
                     });
                     document.querySelectorAll(inSelectorBranch).forEach(branch=>
                     {
                         if(e.target == branch.querySelector(inSelectorButton))
                         {
-                            transitionBranch(branch, 0.2, null, true);
+                            transitionBranch(branch, 0.4, null, true);
                         }
                     });
                 }
@@ -201,10 +211,12 @@
                 {
                     transitionBranch(branch, 0, false, true);
                 });
+
+                return function(){document.removeEventListener("click", handleClick);}
             }
         </script>
         <script>
-            Menu(".Branch--Root", ".Branch", ".Branch>span", ".Branch>ul");
+            Menu(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu");
         </script>
     </body>
 </html>
