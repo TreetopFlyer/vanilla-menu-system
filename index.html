@@ -15,7 +15,7 @@
             {
                 content:"+";
             }
-            span[data-open='true']:before
+            span[data-menu-open='true']:before
             {
                 content:"-";
             }
@@ -125,36 +125,44 @@
         <script>
             function Menu(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu)
             {
-                function collapseChildren(inMode, inMenu)
+                function transitionBranch(inBranch, inTime, inMode, inCollapseChildren)
                 {
-                    if(!inMode)
+                    function done(inMode, inMenu)
                     {
-                        inMenu.querySelectorAll(inSelectorBranch).forEach(sub => Transition(sub.querySelector(inSelectorMenu), 0, false, [sub.querySelector(inSelectorButton)]));
+                        if(!inMode)
+                        {
+                            inMenu.querySelectorAll(inSelectorBranch).forEach(kill);
+                        }
                     }
+                    function kill(inSubBranch)
+                    {
+                        Transition(inSubBranch.querySelector(inSelectorMenu), 0, false, [inSubBranch.querySelector(inSelectorButton)], "data-menu-open", "data-menu-move");
+                    }
+                    Transition(
+                        inBranch.querySelector(inSelectorMenu),
+                        inTime,
+                        inMode,
+                        [inBranch.querySelector(inSelectorButton)],
+                        "data-menu-open",
+                        "data-menu-move"
+                    )(inCollapseChildren ? done : function(){});
                 }
 
                 document.addEventListener("click", function(e)
                 {
                     document.querySelectorAll(inSelectorRoot).forEach(root=>
                     {
-                        if(!root.contains(e.target))
-                        {
-                            Transition(root.querySelector(inSelectorMenu), 0.4, false, [root.querySelector(inSelectorButton)])(collapseChildren);
-                        }
+                        if(!root.contains(e.target)){ transitionBranch(root, 0.4, false, true); }
                     });
                 });
 
                 
                 document.querySelectorAll(inSelectorBranch).forEach(branch=>
                 {
-                    var button, menu;
-                    
-                    menu = branch.querySelector(inSelectorMenu);
-                    Transition(menu, 0, false);
-                    button = branch.querySelector(inSelectorButton);
-                    button.addEventListener("click", e =>
+                    transitionBranch(branch, 0, false, true);
+                    branch.querySelector(inSelectorButton).addEventListener("click", e =>
                     {
-                        Transition(menu, 0.4, null, [button])(collapseChildren);
+                        transitionBranch(branch, 0.4, null, true);
                     });
                 });
             }
