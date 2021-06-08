@@ -2,6 +2,23 @@
 <html>
     <head>
         <style>
+            span
+            {
+                display:block;
+                padding:5px 10px 5px 10px;
+                background:#555;
+                border-radius:20px;
+                color:white;
+                font-weight:900;
+            }
+            span:before
+            {
+                content:"+";
+            }
+            span[data-open='true']:before
+            {
+                content:"-";
+            }
         </style>
     </head>
     <body>
@@ -17,6 +34,14 @@
                         <ul>
                             <li><a>Station Finder  </a></li>
                             <li><a>For Broadcasters</a></li>
+                        </ul>
+                    </li>
+                    <li class="Branch">
+                        <span>paragraph test</span>
+                        <ul>
+                            <li>
+                                <p>woah</p>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -57,10 +82,7 @@
 
                 setRefs = function(inKey, inValue)
                 {
-                    refs.forEach(function(inRef)
-                    {
-                        inRef.setAttribute(inKey, inValue);
-                    });
+                    refs.forEach(function(inRef){ inRef.setAttribute(inKey, inValue); });
                 }
                 setStyle = function(inHeight, inOverflow, inTransition)
                 {
@@ -75,17 +97,14 @@
                 {
                     setRefs(attrMove, false);
                     inElement.removeEventListener("transitionend", handleDone);
-                    if(inMode)
-                    {
-                        setStyle("auto", "visible", "");
-                    }
+                    if(inMode){ setStyle("auto", "visible", ""); }
                     handleUser(inMode, inElement);
                 };
 
                 if (inMode == null){ inMode = !stateOpen; }
                 if (inMode != stateOpen)
                 {
-                    setStyle(inElement.getBoundingClientRect().height+"px", "hidden", "height "+inTime+"s");// 1) forcibly set the element's css-declared height to its currently displayed height
+                    setStyle(inElement.scrollHeight+"px", "hidden", "height "+inTime+"s");// 1) forcibly set the element's css-declared height to its currently displayed height
                     setRefs(attrOpen, inMode); // 2) update "state"
                     setRefs(attrMove, true); // 3) enable transitions
 
@@ -110,7 +129,7 @@
                 {
                     if(!inMode)
                     {
-                        inMenu.querySelectorAll(inSelectorMenu).forEach(sub => Transition(sub, 0, false));
+                        inMenu.querySelectorAll(inSelectorBranch).forEach(sub => Transition(sub.querySelector(inSelectorMenu), 0, false, [sub.querySelector(inSelectorButton)]));
                     }
                 }
 
@@ -120,7 +139,7 @@
                     {
                         if(!root.contains(e.target))
                         {
-                            Transition(root.querySelector(inSelectorMenu), 0.4, false)(collapseChildren);
+                            Transition(root.querySelector(inSelectorMenu), 0.4, false, [root.querySelector(inSelectorButton)])(collapseChildren);
                         }
                     });
                 });
@@ -135,7 +154,7 @@
                     button = branch.querySelector(inSelectorButton);
                     button.addEventListener("click", e =>
                     {
-                        Transition(menu, 0.4, null)(collapseChildren);
+                        Transition(menu, 0.4, null, [button])(collapseChildren);
                     });
                 });
             }
