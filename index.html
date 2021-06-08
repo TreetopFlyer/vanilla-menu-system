@@ -2,22 +2,57 @@
 <html>
     <head>
         <style>
-            span
+            ul, li, span, a
             {
                 display:block;
+                margin:0;
+                padding:0;
+                border:0;
+                list-style-type: none;
+                white-space: nowrap;
+            }
+            ul
+            {
+                background:lightgrey;
+                border-radius:5px;
+            }
+            a
+            {
+                padding:10px;
+            }
+            span
+            {
                 padding:5px 10px 5px 10px;
                 background:#555;
-                border-radius:20px;
+                border-radius:5px;
                 color:white;
                 font-weight:900;
+                transition:background-color 0.5s;
+            }
+            span[data-menu-open='true'], span[data-menu-move='true']
+            {
+                background-color: orange;
             }
             span:before
             {
+                display:inline-block;
+                width:20px;
+                height:20px;
                 content:"+";
             }
             span[data-menu-open='true']:before
             {
                 content:"-";
+            }
+            .Branch--Root
+            {
+                position: relative;
+                display:inline-block;
+            }
+            .Branch--Root > ul
+            {
+                position:absolute;
+                top:100%;
             }
         </style>
     </head>
@@ -40,7 +75,7 @@
                         <span>paragraph test</span>
                         <ul>
                             <li>
-                                <p>woah</p>
+                                really really really really really 
                             </li>
                         </ul>
                     </li>
@@ -131,13 +166,10 @@
                     {
                         if(!inMode)
                         {
-                            inMenu.querySelectorAll(inSelectorBranch).forEach(kill);
+                            inMenu.querySelectorAll(inSelectorBranch).forEach(function(inSubBranch){transitionBranch(inSubBranch, 0, false, false);});
                         }
                     }
-                    function kill(inSubBranch)
-                    {
-                        Transition(inSubBranch.querySelector(inSelectorMenu), 0, false, [inSubBranch.querySelector(inSelectorButton)], "data-menu-open", "data-menu-move");
-                    }
+                    
                     Transition(
                         inBranch.querySelector(inSelectorMenu),
                         inTime,
@@ -148,22 +180,26 @@
                     )(inCollapseChildren ? done : function(){});
                 }
 
-                document.addEventListener("click", function(e)
+                function handleClick(e)
                 {
                     document.querySelectorAll(inSelectorRoot).forEach(root=>
                     {
-                        if(!root.contains(e.target)){ transitionBranch(root, 0.4, false, true); }
+                        if(!root.contains(e.target)){ transitionBranch(root, 0.2, false, true); }
                     });
-                });
+                    document.querySelectorAll(inSelectorBranch).forEach(branch=>
+                    {
+                        if(e.target == branch.querySelector(inSelectorButton))
+                        {
+                            transitionBranch(branch, 0.2, null, true);
+                        }
+                    });
+                }
 
-                
+                document.addEventListener("click", handleClick);
+
                 document.querySelectorAll(inSelectorBranch).forEach(branch=>
                 {
                     transitionBranch(branch, 0, false, true);
-                    branch.querySelector(inSelectorButton).addEventListener("click", e =>
-                    {
-                        transitionBranch(branch, 0.4, null, true);
-                    });
                 });
             }
         </script>
