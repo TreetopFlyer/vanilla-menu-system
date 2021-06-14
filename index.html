@@ -2,221 +2,82 @@
 <html>
     <head>
         <style>
-            ul, li, a
+            [data-open]
             {
-                display: block;
-                margin:0;
-                padding:0;
-                border:0;
-            }
-            .Branch__Button
-            {
-                background:black;
-                color:white;
-            }
-            .Branch__Menu
-            {
+                position:relative;
                 display:block;
+                width:300px;
+                height:300px;
+                background:red;
+                transition:width 1s, height 2s;
             }
-
-            .Branch--Tier0 ul
+            [data-open='true']
             {
-                padding:0 0 20px 20px;
-                background:orange;
-            }
-            .Branch--Tier0 li:last-child ul
-            {
-                padding-bottom: 0;
+                width:600px;
+                height:100px;
             }
 
         </style>
     </head>
     <body>
-        <style>
-            #sizer
-            {
-                padding:20px;
-                margin:10px;
-                background:yellow;
-                border:5px solid black;
-            }
-        </style>
-        <div id="sizer">
-            <p>yikes</p>
+
+        <div>
+            <button id="button">Toggle</button>
+            <div id="menu" data-open="false"></div>
         </div>
-        <nav>
-            <ul>
-                <li class="Branch Branch--Root Branch--Tier0">
-                    <span class="Branch__Button">Programs</span>
-                    <span class="Branch__Menu">
-                        <ul>
-                            <li><a>Latest</a></li>
-                            <li><a>Archives</a></li>
-                            <li class="Branch Branch--Tier1">
-                                <span class="Branch__Button">Radio</span>
-                                <span class="Branch__Menu">
-                                    <ul>
-                                        <li><a>Station Finder  </a></li>
-                                        <li><a>For Broadcasters</a></li>
-                                    </ul>
-                                </span>
-                            </li>
-                            <li class="Branch Branch--Tier1">
-                                <span class="Branch__Button">paragraph test</span>
-                                <span class="Branch__Menu">
-                                    <ul>
-                                        <li>
-                                            <a>really really really really really long</a>
-                                        </li>
-                                    </ul>
-                                </span>
-                            </li>
-                        </ul>
-                    </span>
-                </li>
-                <li class="Branch Branch--Root Branch--Tier0">
-                    <span class="Branch__Button">Sermons</span>
-                    <span class="Branch__Menu">
-                        <ul>
-                            <li><a>Latest</a></li>
-                            <li class="Branch Branch--Tier0">
-                                <span class="Branch__Button">Browse By</span>
-                                <span class="Branch__Menu">
-                                    <ul>
-                                        <li><a>Topic</a></li>
-                                        <li><a>Series</a></li>
-                                        <li><a>Scripture</a></li>
-                                        <li><a>Date</a></li>
-                                        <li><a>Transcript</a></li>
-                                    </ul>
-                                </span>
-                            </li>
-                        </ul>
-                    </span>
-                </li>
-                <li>
-                    <a>Blog</a>
-                </li>
-                <li>
-                    <a>More</a>
-                </li>
-                <li>
-                    <a>Store</a>
-                </li>
-                <li>
-                    <span>Donate</span>
-                </li>
-            </ul>
-        </nav>
 
         <script>
-            function Transition(inElement, inTime, inMode, inRefs, inAttrOpen, inAttrMove)
+            function TransitionDone(inElement)
             {
-                var stateOpen, stateMove;
-                var handleTick, handleDone, handleUser;
-                var attrOpen, attrMove;
-                var refs;
-                var setRefs, setStyle;
+                var keys = {};
 
-                refs = inRefs || [];
-                refs.push(inElement);
-                attrOpen  = inAttrOpen || "data-open";
-                attrMove  = inAttrMove || "data-move";
-                stateOpen = inElement.getAttribute(attrOpen) != "false";
-                stateMove = inElement.getAttribute(attrMove) == "true";
+                var handleRun = function(inEvent)
+                {
+                    if(inEvent.target != inEvent.currentTarget){return;}
+                    if(keys[inEvent.propertyName]){return;}
 
-                setRefs = function(inKey, inValue)
-                {
-                    refs.forEach(function(inRef){ inRef.setAttribute(inKey, inValue); });
-                }
-                setStyle = function(inHeight, inOverflow, inTransition)
-                {
-                    inElement.style.height = inHeight;
-                    inElement.style.overflow = inOverflow;
-                    inElement.style.transition = inTransition;
+                    keys[inEvent.propertyName] = true;
+                    console.log("start", keys);
                 };
-
-                handleUser = function(){};
-                handleTick = function(inEvent){ inElement.style.height = (inMode ? inElement.scrollHeight : 0) + "px"; };
-                handleDone = function(inEvent)
+                var handleEnd = function(inEvent)
                 {
-                    setRefs(attrMove, false);
-                    inElement.removeEventListener("transitionend", handleDone);
-                    if(inMode){ setStyle("auto", "visible", ""); }
-                    handleUser(inMode, inElement);
-                };
-
-                if (inMode == null){ inMode = !stateOpen; }
-                if (inMode != stateOpen)
-                {
-                    setStyle(inElement.offsetHeight+"px", "hidden", "all "+inTime+"s", "0px");// 1) forcibly set the element's css-declared height to its currently displayed height
-                    setRefs(attrOpen, inMode); // 2) update "state"
-                    setRefs(attrMove, true); // 3) enable transitions
-
-                    if(inTime)
-                    {
-                        if (!stateMove){ inElement.addEventListener("transitionend", handleDone); } // 4) if a done handler is not in place, set one up
-                        setTimeout(handleTick); // 5) after transitions have been enabled, set a new height (inside handler)
-                    }
-                    else
-                    {
-                        handleTick();
-                        handleDone();
-                    }
-                }
-                return function(inDone){handleUser = inDone;}
-            }
-        </script>
-        <script>
-            function Menu(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu)
-            {
-                function transitionBranch(inBranch, inTime, inMode, inCollapseChildren)
-                {
-                    function done(inMode, inMenu)
-                    {
-                        if(!inMode)
-                        {
-                            inMenu.querySelectorAll(inSelectorBranch).forEach(function(inSubBranch){transitionBranch(inSubBranch, 0, false, false);});
-                        }
-                    }
+                    if(inEvent.target != inEvent.currentTarget){return;}
                     
-                    Transition(
-                        inBranch.querySelector(inSelectorMenu),
-                        inTime,
-                        inMode,
-                        [inBranch.querySelector(inSelectorButton)],
-                        "data-menu-open",
-                        "data-menu-move"
-                    )(inCollapseChildren ? done : function(){});
-                }
+                    keys[inEvent.propertyName] = false;
 
-                function handleClick(e)
-                {
-                    document.querySelectorAll(inSelectorRoot).forEach(root=>
+                    for(var key in keys)
                     {
-                        if(!root.contains(e.target)){ transitionBranch(root, 0.4, false, true); }
-                    });
-                    document.querySelectorAll(inSelectorBranch).forEach(branch=>
-                    {
-                        if(e.target == branch.querySelector(inSelectorButton))
+                        if(keys[key] == true)
                         {
-                            transitionBranch(branch, 0.4, null, true);
+                            return;
                         }
-                    });
-                }
+                    }
+                    console.log("stop", keys);
+                };
 
-                document.addEventListener("click", handleClick);
-
-                document.querySelectorAll(inSelectorBranch).forEach(branch=>
-                {
-                    transitionBranch(branch, 0, false, true);
-                });
-
-                return function(){document.removeEventListener("click", handleClick);}
+                inElement.addEventListener("transitionrun", handleRun);
+                inElement.addEventListener("transitionend", handleEnd);
             }
         </script>
         <script>
-            Menu(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu");
+            var button, menu;
+            button = document.querySelector("#button");
+            menu = document.querySelector("#menu");
+            button.addEventListener("click", function(e)
+            {
+                if(menu.getAttribute("data-open") == "true")
+                {
+                    menu.setAttribute("data-open", false);
+                }
+                else
+                {
+                    menu.setAttribute("data-open", true);
+                }
+            }
+            );
+            TransitionDone(menu);
+            
         </script>
+
     </body>
 </html>
