@@ -26,27 +26,29 @@
     <body>
 
         <div>
-            <button id="button1">Toggle</button>
+            <button id="button1">branch</button>
             <div id="menu1" data-open="false" data-bind>
-                <button id="button2">Toggle</button>
-                <div id="menu2" data-open="false" data-bind></div>
+                <div>leaf!</div>
+                <button id="button2">branch</button>
+                <div id="menu2" data-open="false" data-bind>
+                    <div>leaf!</div>
+                </div>
             </div>
         </div>
 
         <script>
-            function TransitionDone(inElement, inHandlerStart, inHandlerStop)
+            function TransitionDetector(inElement, inAttribute, inHandlerStart, inHandlerStop)
             {
-                var attrKey = "data-bind";
-                var attrValue = "";
-
                 var handleRun = function(inEvent)
                 {
                     var t;
                     var keys;
+
                     t = inEvent.target;
-                    keys = t.getAttribute(attrKey);
+                    keys = t.getAttribute(inAttribute);
                     if(keys === null){return;}
-                    if(keys == attrValue)
+
+                    if(keys == "")
                     {
                         keys = {};
                         inHandlerStart(t);
@@ -58,55 +60,77 @@
 
                     if(keys[inEvent.propertyName]){return;}
                     keys[inEvent.propertyName] = true;
-                    t.setAttribute(attrKey, JSON.stringify(keys));
+                    t.setAttribute(inAttribute, JSON.stringify(keys));
                 };
                 var handleEnd = function(inEvent)
                 {
                     var t;
                     var keys;
-                    t = inEvent.target;
-                    keys = t.getAttribute(attrKey);
-                    if(keys === null){return;}
-                    keys = JSON.parse(keys);
 
+                    t = inEvent.target;
+                    keys = t.getAttribute(inAttribute);
+                    if(keys === null){return;}
+
+                    keys = JSON.parse(keys);
                     keys[inEvent.propertyName] = false;
                     for(var key in keys)
                     {
                         if(keys[key] == true)
                         {
-                            t.setAttribute(attrKey, JSON.stringify(keys));
+                            t.setAttribute(inAttribute, JSON.stringify(keys));
                             return;
                         }
                     }
-                    t.setAttribute(attrKey, attrValue);
+                    t.setAttribute(inAttribute, "");
                     inHandlerStop(t);
                 };
 
                 inElement.addEventListener("transitionrun", handleRun);
                 inElement.addEventListener("transitionend", handleEnd);
+
+                return function()
+                {
+                    inElement.removeEventListener("transitionrun", handleRun);
+                    inElement.removeEventListener("transitionend", handleEnd);
+                };
             }
         </script>
         <script>
 
-            var toggle = function(inElement, inAttribute)
-            {
-                value = inElement.getAttribute(inAttribute)=="true";
-                inElement.setAttribute( inAttribute, !value );
-            };
-
-            var pair = function(inSelButton, inSelMenu)
+            var pair = function(inSelButton, inSelMenu, inAttribute)
             {
                 document.querySelector(inSelButton).addEventListener("click", function()
                 {
-                    toggle(document.querySelector(inSelMenu), "data-open");
+                    var element, value;
+                    element = document.querySelector(inSelMenu);
+                    value = element.getAttribute(inAttribute)=="true";
+                    element.setAttribute( inAttribute, !value );
                 });
             };
-            
 
-            pair("#button1", "#menu1");
-            pair("#button2", "#menu2");
+            pair("#button1", "#menu1", "data-open");
+            pair("#button2", "#menu2", "data-open");
 
-            TransitionDone(document.body, e=>console.log("start"), e=>console.log("stop"));
+            TransitionDetector(document.body, "data-bind",
+            e=>
+            {
+                if(e.getAttribute("data-open")=="false"){return;}
+                e.querySelectorAll("[data-bind]").forEach(e=>
+                {
+                    e.style.transition = "";
+                });
+            },
+            e=>
+            {
+                if(e.getAttribute("data-open")=="true"){return;}
+                e.querySelectorAll("[data-bind]").forEach(e=>
+                {
+                    e.style.transition = "none";
+                    e.setAttribute("data-open", false);
+                    e.setAttribute("data-bind", "");
+                });
+            }
+            );
             
         </script>
 
