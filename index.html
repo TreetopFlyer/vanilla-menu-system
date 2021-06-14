@@ -6,16 +6,10 @@
             {
                 position:relative;
                 display:block;
-                width:300px;
-                height:300px;
-                background:red;
-                padding:10px;
-                transition:width 1s, height 2s;
-            }
-            [data-open='true']
-            {
-                width:600px;
-                height:100px;
+                height:0;
+                overflow:hidden;
+                transition:height 1s;
+                border:2px dotted black;
             }
             [data-bind='']
             {
@@ -41,14 +35,13 @@
             {
                 var handleRun = function(inEvent)
                 {
-                    var t;
-                    var keys;
+                    var t, keys;
 
                     t = inEvent.target;
                     keys = t.getAttribute(inAttribute);
                     if(keys === null){return;}
 
-                    if(keys == "")
+                    if(!keys || keys == "")
                     {
                         keys = {};
                         inHandlerStart(t);
@@ -64,8 +57,7 @@
                 };
                 var handleEnd = function(inEvent)
                 {
-                    var t;
-                    var keys;
+                    var t, keys;
 
                     t = inEvent.target;
                     keys = t.getAttribute(inAttribute);
@@ -94,44 +86,63 @@
                     inElement.removeEventListener("transitionend", handleEnd);
                 };
             }
-        </script>
-        <script>
 
-            var pair = function(inSelButton, inSelMenu, inAttribute)
+            function Collapse(inElement, inMode)
             {
-                document.querySelector(inSelButton).addEventListener("click", function()
+                inElement.style.height = inElement.clientHeight+"px";
+                inElement.style.overflow = "hidden";
+                setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
+            }
+
+            function Pair(inSelButton, inSelMenu, inAttribute)
+            {
+                var button, menu;
+                button = document.querySelector(inSelButton)
+                  menu = document.querySelector(inSelMenu);
+                button.addEventListener("click", function()
                 {
-                    var element, value;
-                    element = document.querySelector(inSelMenu);
-                    value = element.getAttribute(inAttribute)=="true";
-                    element.setAttribute( inAttribute, !value );
+                    var status = menu.getAttribute(inAttribute)=="true";
+                    menu.setAttribute(inAttribute, !status);
+                    Collapse(menu, !status);
                 });
             };
-
-            pair("#button1", "#menu1", "data-open");
-            pair("#button2", "#menu2", "data-open");
+        </script>
+        <script>
+            Pair("#button1", "#menu1", "data-open");
+            Pair("#button2", "#menu2", "data-open");
 
             TransitionDetector(document.body, "data-bind",
             e=>
             {
-                if(e.getAttribute("data-open")=="false"){return;}
-                e.querySelectorAll("[data-bind]").forEach(e=>
+                if(e.getAttribute("data-open")=="true")
                 {
-                    e.style.transition = "";
-                });
+                    // starting to open
+                    e.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
+                }
             },
             e=>
             {
-                if(e.getAttribute("data-open")=="true"){return;}
-                e.querySelectorAll("[data-bind]").forEach(e=>
+                if(e.getAttribute("data-open")=="true")
                 {
-                    e.style.transition = "none";
-                    e.setAttribute("data-open", false);
-                    e.setAttribute("data-bind", "");
-                });
+                    // done opening
+                    e.style.transition = "";
+                    e.style.overflow = "visible";
+                    e.style.height = "auto";
+                }
+                else
+                {
+                    // done closing
+                    e.querySelectorAll("[data-bind]").forEach(e=>
+                    {
+                        e.setAttribute("data-bind", "");
+                        e.setAttribute("data-open", false);
+                        e.style.transition = "none";
+                        e.style.overflow = "hidden";
+                        e.style.height = "0px";
+                    });
+                }
             }
             );
-            
         </script>
 
     </body>
