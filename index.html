@@ -2,6 +2,17 @@
 <html>
     <head>
         <style>
+            .Branch__Menu
+            {
+                position:relative;
+                display:block;
+                height:0;
+                overflow:hidden;
+                transition:height 1s;
+                border:2px dotted black;
+            }
+        </style>
+        <style>
             [data-open]
             {
                 position:relative;
@@ -16,6 +27,7 @@
                 border:2px solid black;
             }
         </style>
+
     </head>
     <body>
 
@@ -30,8 +42,46 @@
             </div>
         </div>
 
+        <nav>
+            <ul>
+                <li><a>Leaf</a></li>
+                <li><a>Leaf</a></li>
+                <li class="Branch Branch--Root">
+                    <span class="Branch__Button">Branch</span>
+                    <span class="Branch__Menu" data-bind data-open="false">
+                        <ul>
+                            <li><a>Leaf</a></li>
+                            <li class="Branch">
+                                <span class="Branch__Button">Branch</span>
+                                <span class="Branch__Menu" data-bind data-open="false">
+                                    <ul>
+                                        <li><a>Leaf</a></li>
+                                        <li><a>Leaf</a></li>
+                                        <li><a>Leaf</a></li>
+                                    </ul>
+                                </span>
+                            </li>
+                            <li><a>Leaf</a></li>
+                            <li><a>Leaf</a></li>
+                            <li class="Branch">
+                                <span class="Branch__Button">Branch</span>
+                                <span class="Branch__Menu" data-bind data-open="false">
+                                    <ul>
+                                        <li><a>Leaf</a></li>
+                                        <li><a>Leaf</a></li>
+                                        <li><a>Leaf</a></li>
+                                    </ul>
+                                </span>
+                            </li>
+                        </ul>
+                    </span>
+                </li>
+                <li><a>Leaf</a></li>
+            </ul>
+        </nav>
+
         <script>
-            function TransitionDetector(inElement, inAttribute, inHandlerStart, inHandlerStop)
+            function TransitionDetector(inAttribute, inHandlerStart, inHandlerStop)
             {
                 var handleRun = function(inEvent)
                 {
@@ -77,13 +127,13 @@
                     inHandlerStop(t);
                 };
 
-                inElement.addEventListener("transitionrun", handleRun);
-                inElement.addEventListener("transitionend", handleEnd);
+                document.body.addEventListener("transitionrun", handleRun);
+                document.body.addEventListener("transitionend", handleEnd);
 
                 return function()
                 {
-                    inElement.removeEventListener("transitionrun", handleRun);
-                    inElement.removeEventListener("transitionend", handleEnd);
+                    document.body.removeEventListener("transitionrun", handleRun);
+                    document.body.removeEventListener("transitionend", handleEnd);
                 };
             }
 
@@ -106,20 +156,40 @@
                     Collapse(menu, !status);
                 });
             };
+            
+            function ClickDetector(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
+            {
+                function handleClick(e)
+                {
+                    document.querySelectorAll(inSelectorRoot).forEach(root=>
+                    {
+                        if(!root.contains(e.target))
+                        {
+                            inHandlerClose(root, root.querySelector(inSelectorButton), root.querySelector(inSelectorMenu), e.target);
+                        }
+                    });
+                    document.querySelectorAll(inSelectorBranch).forEach(branch=>
+                    {
+                        if(e.target == branch.querySelector(inSelectorButton))
+                        {
+                            inHandlerToggle(branch, branch.querySelector(inSelectorButton), branch.querySelector(inSelectorMenu), e.target);
+                        }
+                    });
+                }
+
+                document.body.addEventListener("click", handleClick);
+                return function(){document.body.removeEventListener("click", handleClick);}
+            }
+        
         </script>
         <script>
+
             Pair("#button1", "#menu1", "data-open");
             Pair("#button2", "#menu2", "data-open");
 
-            TransitionDetector(document.body, "data-bind",
-            e=>
-            {
-                if(e.getAttribute("data-open")=="true")
-                {
-                    // starting to open
-                    e.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
-                }
-            },
+
+            TransitionDetector("data-bind",
+            e=>{},
             e=>
             {
                 if(e.getAttribute("data-open")=="true")
@@ -128,11 +198,14 @@
                     e.style.transition = "";
                     e.style.overflow = "visible";
                     e.style.height = "auto";
+                    console.log("done opening");
                 }
                 else
                 {
                     // done closing
-                    e.querySelectorAll("[data-bind]").forEach(e=>
+                    var menus;
+                    menus = e.querySelectorAll("[data-bind]");
+                    menus.forEach(e=>
                     {
                         e.setAttribute("data-bind", "");
                         e.setAttribute("data-open", false);
@@ -140,9 +213,34 @@
                         e.style.overflow = "hidden";
                         e.style.height = "0px";
                     });
+                    setTimeout(function()
+                    {
+                        menus.forEach(e=>
+                        {
+                            e.style.transition = "";
+                        });
+                    });
                 }
             }
             );
+        
+            ClickDetector(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu",
+            (inBranch, inButton, inMenu, inEvent)=>
+            {
+                // close (click away)
+                inMenu.setAttribute("data-open", false);
+                Collapse(inMenu, false);
+            }
+            ,
+            (inBranch, inButton, inMenu, inEvent)=>
+            {
+                // toggle
+                var status = inMenu.getAttribute("data-open")=="true";
+                inMenu.setAttribute("data-open", !status);
+                Collapse(inMenu, !status);
+            }
+            );
+
         </script>
 
     </body>
