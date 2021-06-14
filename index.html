@@ -7,20 +7,14 @@
                 position:relative;
                 display:block;
                 height:0;
+                opacity:0;
                 overflow:hidden;
-                transition:height 1s;
+                transition:height 0.4s, opacity 0.8s;
                 border:2px dotted black;
             }
-        </style>
-        <style>
-            [data-open]
+            [data-open='true']
             {
-                position:relative;
-                display:block;
-                height:0;
-                overflow:hidden;
-                transition:height 1s;
-                border:2px dotted black;
+                opacity:1;
             }
             [data-bind='']
             {
@@ -30,17 +24,6 @@
 
     </head>
     <body>
-
-        <div>
-            <button id="button1">branch</button>
-            <div id="menu1" data-open="false" data-bind>
-                <div>leaf!</div>
-                <button id="button2">branch</button>
-                <div id="menu2" data-open="false" data-bind>
-                    <div>leaf!</div>
-                </div>
-            </div>
-        </div>
 
         <nav>
             <ul>
@@ -127,36 +110,16 @@
                     inHandlerStop(t);
                 };
 
-                document.body.addEventListener("transitionrun", handleRun);
-                document.body.addEventListener("transitionend", handleEnd);
+                document.addEventListener("transitionrun", handleRun);
+                document.addEventListener("transitionend", handleEnd);
 
                 return function()
                 {
-                    document.body.removeEventListener("transitionrun", handleRun);
-                    document.body.removeEventListener("transitionend", handleEnd);
+                    document.removeEventListener("transitionrun", handleRun);
+                    document.removeEventListener("transitionend", handleEnd);
                 };
             }
 
-            function Collapse(inElement, inMode)
-            {
-                inElement.style.height = inElement.clientHeight+"px";
-                inElement.style.overflow = "hidden";
-                setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
-            }
-
-            function Pair(inSelButton, inSelMenu, inAttribute)
-            {
-                var button, menu;
-                button = document.querySelector(inSelButton)
-                  menu = document.querySelector(inSelMenu);
-                button.addEventListener("click", function()
-                {
-                    var status = menu.getAttribute(inAttribute)=="true";
-                    menu.setAttribute(inAttribute, !status);
-                    Collapse(menu, !status);
-                });
-            };
-            
             function ClickDetector(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
             {
                 function handleClick(e)
@@ -177,16 +140,19 @@
                     });
                 }
 
-                document.body.addEventListener("click", handleClick);
-                return function(){document.body.removeEventListener("click", handleClick);}
+                document.addEventListener("click", handleClick);
+                return function(){document.removeEventListener("click", handleClick);}
             }
         
         </script>
         <script>
-
-            Pair("#button1", "#menu1", "data-open");
-            Pair("#button2", "#menu2", "data-open");
-
+            
+            function Collapse(inElement, inMode)
+            {
+                inElement.style.height = inElement.clientHeight+"px";
+                inElement.style.overflow = "hidden";
+                setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
+            }
 
             TransitionDetector("data-bind",
             e=>{},
