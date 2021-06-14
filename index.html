@@ -9,6 +9,7 @@
                 width:300px;
                 height:300px;
                 background:red;
+                padding:10px;
                 transition:width 1s, height 2s;
             }
             [data-open='true']
@@ -16,42 +17,59 @@
                 width:600px;
                 height:100px;
             }
-
+            [data-bind='']
+            {
+                border:2px solid black;
+            }
         </style>
     </head>
     <body>
 
         <div>
-            <button id="button">Toggle</button>
-            <div id="menu" data-open="false"></div>
+            <button id="button1">Toggle</button>
+            <div id="menu1" data-open="false" data-bind>
+                <button id="button2">Toggle</button>
+                <div id="menu2" data-open="false" data-bind></div>
+            </div>
         </div>
 
         <script>
             function TransitionDone(inElement)
             {
-                var keys = {};
+                var attrKey = "data-bind";
+                var attrValue = "";
 
                 var handleRun = function(inEvent)
                 {
-                    if(inEvent.target != inEvent.currentTarget){return;}
+                    var keys;
+                    keys = inEvent.target.getAttribute(attrKey);
+                    if(keys === null){return;}
+                
+                    keys = (keys==attrValue) ? {} : JSON.parse(keys);
                     if(keys[inEvent.propertyName]){return;}
 
                     keys[inEvent.propertyName] = true;
+                    inEvent.target.setAttribute(attrKey, JSON.stringify(keys));
                     console.log("start", keys);
                 };
                 var handleEnd = function(inEvent)
                 {
-                    if(inEvent.target != inEvent.currentTarget){return;}
+                    var keys;
+                    keys = inEvent.target.getAttribute(attrKey);
+                    if(keys === null){return;}
                     
+                    keys = (keys==attrValue) ? {} : JSON.parse(keys);
                     keys[inEvent.propertyName] = false;
-
+                    
                     for(var key in keys)
                     {
                         if(keys[key] == true)
                         {
+                            inEvent.target.setAttribute(attrKey, JSON.stringify(keys));
                             return;
                         }
                     }
+                    inEvent.target.setAttribute(attrKey, attrValue);
                     console.log("stop", keys);
                 };
 
@@ -60,22 +78,24 @@
             }
         </script>
         <script>
+
+            var toggle = function(inElement, inAttribute)
+            {
+                value = inElement.getAttribute(inAttribute)=="true";
+                inElement.setAttribute( inAttribute, !value );
+            };
+
             var button, menu;
-            button = document.querySelector("#button");
-            menu = document.querySelector("#menu");
+            button = document.querySelector("#button1");
+            menu = document.querySelector("#menu1");
+
             button.addEventListener("click", function(e)
             {
-                if(menu.getAttribute("data-open") == "true")
-                {
-                    menu.setAttribute("data-open", false);
-                }
-                else
-                {
-                    menu.setAttribute("data-open", true);
-                }
+                toggle(menu, "data-open");
             }
             );
-            TransitionDone(menu);
+
+            TransitionDone(document.body);
             
         </script>
 
