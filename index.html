@@ -34,43 +34,52 @@
         </div>
 
         <script>
-            function TransitionDone(inElement)
+            function TransitionDone(inElement, inHandlerStart, inHandlerStop)
             {
                 var attrKey = "data-bind";
                 var attrValue = "";
 
                 var handleRun = function(inEvent)
                 {
+                    var t;
                     var keys;
-                    keys = inEvent.target.getAttribute(attrKey);
+                    t = inEvent.target;
+                    keys = t.getAttribute(attrKey);
                     if(keys === null){return;}
-                
-                    keys = (keys==attrValue) ? {} : JSON.parse(keys);
-                    if(keys[inEvent.propertyName]){return;}
+                    if(keys == attrValue)
+                    {
+                        keys = {};
+                        inHandlerStart(t);
+                    }
+                    else
+                    {
+                        keys = JSON.parse(keys);
+                    }
 
+                    if(keys[inEvent.propertyName]){return;}
                     keys[inEvent.propertyName] = true;
-                    inEvent.target.setAttribute(attrKey, JSON.stringify(keys));
-                    console.log("start", keys);
+                    t.setAttribute(attrKey, JSON.stringify(keys));
                 };
                 var handleEnd = function(inEvent)
                 {
+                    var t;
                     var keys;
-                    keys = inEvent.target.getAttribute(attrKey);
+                    t = inEvent.target;
+                    keys = t.getAttribute(attrKey);
                     if(keys === null){return;}
-                    
-                    keys = (keys==attrValue) ? {} : JSON.parse(keys);
+                    keys = JSON.parse(keys);
+
                     keys[inEvent.propertyName] = false;
-                    
                     for(var key in keys)
                     {
                         if(keys[key] == true)
                         {
-                            inEvent.target.setAttribute(attrKey, JSON.stringify(keys));
+                            t.setAttribute(attrKey, JSON.stringify(keys));
                             return;
                         }
                     }
-                    inEvent.target.setAttribute(attrKey, attrValue);
-                    console.log("stop", keys);
+                    t.setAttribute(attrKey, attrValue);
+                    inHandlerStop(t);
                 };
 
                 inElement.addEventListener("transitionrun", handleRun);
@@ -85,17 +94,19 @@
                 inElement.setAttribute( inAttribute, !value );
             };
 
-            var button, menu;
-            button = document.querySelector("#button1");
-            menu = document.querySelector("#menu1");
-
-            button.addEventListener("click", function(e)
+            var pair = function(inSelButton, inSelMenu)
             {
-                toggle(menu, "data-open");
-            }
-            );
+                document.querySelector(inSelButton).addEventListener("click", function()
+                {
+                    toggle(document.querySelector(inSelMenu), "data-open");
+                });
+            };
+            
 
-            TransitionDone(document.body);
+            pair("#button1", "#menu1");
+            pair("#button2", "#menu2");
+
+            TransitionDone(document.body, e=>console.log("start"), e=>console.log("stop"));
             
         </script>
 
