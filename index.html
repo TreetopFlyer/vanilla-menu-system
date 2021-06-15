@@ -9,7 +9,7 @@
                 height:0;
                 opacity:0;
                 overflow:hidden;
-                transition:height 0.8s, opacity 0.4s;
+                transition:height 1s, opacity 0.4s;
                 border:2px dotted black;
             }
             [data-open='true']
@@ -172,10 +172,16 @@
                 if(e.getAttribute("data-open")=="true")
                 {
                     // done opening
-                    e.style.transition = "";
-                    e.style.overflow = "visible";
-                    e.style.height = "auto";
-                    console.log("done opening");
+                    if(Math.abs(e.scrollHeight - parseInt(e.style.height)) > 3)
+                    {
+                        e.style.height = e.scrollHeight+"px";
+                    }
+                    else
+                    {
+                        e.style.transition = "";
+                        e.style.overflow = "visible";
+                        e.style.height = "auto";
+                    }
                 }
                 else
                 {
