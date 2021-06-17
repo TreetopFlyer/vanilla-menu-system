@@ -134,48 +134,32 @@ function DetectClick(inConfig)
 }
 </script>
 <script>
+var AttributeOpen = "data-open";
+var AttributeLive = "data-bind";
 function SetStyle(inElement, inHeight, inTransition)
 {
-    if(inTransition != null)
-    {
-        inElement.style.transition = inTransition;
-    }
+    if(inTransition != null){ inElement.style.transition = inTransition; }
     inElement.style.height = inHeight;
 }
 function SetState(inElement, inOpen, inTransition)
 {
-    if(inTransition != null)
-    {
-        inElement.setAttribute("data-bind", inTransition);
-    }
-    inElement.setAttribute("data-open", inOpen);
+    if(inTransition != null){ inElement.setAttribute(AttributeLive, inTransition); }
+    inElement.setAttribute(AttributeOpen, inOpen);
 }
 function GetState(inElement, inTransition)
 {
-    if(inTransition != null)
-    {
-        var check = inElement.getAttribute("data-bind");
-        return (check && check != "");
-    }
-    return inElement.getAttribute("data-open")=="true";
-}
-function Collapse(inElement, inMode)
-{
-    SetStyle(inElement, inElement.clientHeight+"px");
-    setTimeout(function()
-    {
-        SetStyle(inElement, (inMode?inElement.scrollHeight:0)+"px");
-    });
+    if(inTransition != null){ return (inElement.getAttribute(AttributeLive) != ""); }
+    return inElement.getAttribute(AttributeOpen)=="true";
 }
 DetectTransition({
-    writeTo: "data-bind",
+    writeTo: AttributeLive,
     onStart: (inMenu, inEvent)=>
     {
         var open, i, step;
         open = GetState(inMenu);
         if(open)
         {
-            inMenu.querySelectorAll("[data-bind]").forEach(function(inElement){ SetStyle(inElement, "0px", ""); });
+            inMenu.querySelectorAll(".Branch__Menu").forEach(function(inElement){ SetStyle(inElement, "0px", ""); });
         }
         for(i=0; i<inEvent.path.length-3; i++)
         {
@@ -195,7 +179,7 @@ DetectTransition({
         }
         else
         {
-            inMenu.querySelectorAll("[data-bind]").forEach(e=>
+            inMenu.querySelectorAll(".Branch__Menu").forEach(e=>
             {
                 SetState(e, false, "");
                 SetStyle(e, "0px", "none");
@@ -212,7 +196,8 @@ DetectClick({
             var menu = inEvent.target.nextElementSibling;
             var status = GetState(menu);
             SetState(menu, !status);
-            Collapse(menu, !status);
+            SetStyle(menu, menu.clientHeight+"px");
+            setTimeout(function(){ SetStyle(menu, menu.scrollHeight+"px"); });
         }
     },
     onOut:function(inBranch, inEvent)
@@ -221,7 +206,8 @@ DetectClick({
         if(GetState(menu))
         {
             SetState(menu, false);
-            Collapse(menu, false);
+            SetStyle(menu, menu.clientHeight+"px");
+            setTimeout(function(){ SetStyle(menu, "0px"); });
         }
     }
 });
