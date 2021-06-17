@@ -61,166 +61,171 @@
             </ul>
         </nav>
 
-        <script>
-            function DetectTransition(inConfig)
+<script>
+function DetectTransition(inConfig)
+{
+    var inAttribute = inConfig.writeTo;
+    var inHandlerStart = inConfig.onStart;
+    var inHandlerStop = inConfig.onStop;
+    var handleRun = function(inEvent)
+    {
+        var t, keys;
+
+        t = inEvent.target;
+        keys = t.getAttribute(inAttribute);
+        if(keys === null){return;}
+
+        if(!keys || keys == "")
+        {
+            keys = {};
+            inHandlerStart(t, inEvent);
+        }
+        else
+        {
+            keys = JSON.parse(keys);
+        }
+
+        if(keys[inEvent.propertyName]){return;}
+        keys[inEvent.propertyName] = true;
+        t.setAttribute(inAttribute, JSON.stringify(keys));
+    };
+    var handleEnd = function(inEvent)
+    {
+        var t, keys;
+
+        t = inEvent.target;
+        keys = t.getAttribute(inAttribute);
+        if(keys === null){return;}
+
+        keys = JSON.parse(keys);
+        keys[inEvent.propertyName] = false;
+        for(var key in keys)
+        {
+            if(keys[key] == true)
             {
-                var inAttribute = inConfig.writeTo;
-                var inHandlerStart = inConfig.onStart;
-                var inHandlerStop = inConfig.onStop;
-                var handleRun = function(inEvent)
-                {
-                    var t, keys;
-
-                    t = inEvent.target;
-                    keys = t.getAttribute(inAttribute);
-                    if(keys === null){return;}
-
-                    if(!keys || keys == "")
-                    {
-                        keys = {};
-                        inHandlerStart(t, inEvent);
-                    }
-                    else
-                    {
-                        keys = JSON.parse(keys);
-                    }
-
-                    if(keys[inEvent.propertyName]){return;}
-                    keys[inEvent.propertyName] = true;
-                    t.setAttribute(inAttribute, JSON.stringify(keys));
-                };
-                var handleEnd = function(inEvent)
-                {
-                    var t, keys;
-
-                    t = inEvent.target;
-                    keys = t.getAttribute(inAttribute);
-                    if(keys === null){return;}
-
-                    keys = JSON.parse(keys);
-                    keys[inEvent.propertyName] = false;
-                    for(var key in keys)
-                    {
-                        if(keys[key] == true)
-                        {
-                            t.setAttribute(inAttribute, JSON.stringify(keys));
-                            return;
-                        }
-                    }
-                    t.setAttribute(inAttribute, "");
-                    inHandlerStop(t, inEvent);
-                };
-
-                document.addEventListener("transitionrun", handleRun);
-                document.addEventListener("transitionend", handleEnd);
-
-                return function()
-                {
-                    document.removeEventListener("transitionrun", handleRun);
-                    document.removeEventListener("transitionend", handleEnd);
-                };
+                t.setAttribute(inAttribute, JSON.stringify(keys));
+                return;
             }
-            function DetectClick(inConfig)
+        }
+        t.setAttribute(inAttribute, "");
+        inHandlerStop(t, inEvent);
+    };
+
+    document.addEventListener("transitionrun", handleRun);
+    document.addEventListener("transitionend", handleEnd);
+
+    return function()
+    {
+        document.removeEventListener("transitionrun", handleRun);
+        document.removeEventListener("transitionend", handleEnd);
+    };
+}
+function DetectClick(inConfig)
+{
+    function handleClick(e)
+    {
+        document.querySelectorAll(inConfig.selector).forEach(function(root)
+        {
+            (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
+        });
+    }
+    document.addEventListener("click", handleClick);
+    return function(){document.removeEventListener("click", handleClick);}
+}
+</script>
+<script>
+function SetStyle(inElement, inHeight, inTransition)
+{
+    if(inTransition != null)
+    {
+        inElement.style.transition = inTransition;
+    }
+    inElement.style.height = inHeight;
+}
+function SetState(inElement, inOpen, inTransition)
+{
+    if(inTransition != null)
+    {
+        inElement.setAttribute("data-bind", inTransition);
+    }
+    inElement.setAttribute("data-open", inOpen);
+}
+function GetState(inElement, inTransition)
+{
+    if(inTransition != null)
+    {
+        var check = inElement.getAttribute("data-bind");
+        return (check && check != "");
+    }
+    return inElement.getAttribute("data-open")=="true";
+}
+function Collapse(inElement, inMode)
+{
+    SetStyle(inElement, inElement.clientHeight+"px");
+    setTimeout(function()
+    {
+        SetStyle(inElement, (inMode?inElement.scrollHeight:0)+"px");
+    });
+}
+DetectTransition({
+    writeTo: "data-bind",
+    onStart: (inMenu, inEvent)=>
+    {
+        var open, i, step;
+        open = GetState(inMenu);
+        if(open)
+        {
+            inMenu.querySelectorAll("[data-bind]").forEach(function(inElement){ SetStyle(inElement, "0px", ""); });
+        }
+        for(i=0; i<inEvent.path.length-3; i++)
+        {
+            step = inEvent.path[i];
+            if(GetState(step, true))
             {
-                function handleClick(e)
-                {
-                    document.querySelectorAll(inConfig.selector).forEach(function(root)
-                    {
-                        (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
-                    });
-                }
-                document.addEventListener("click", handleClick);
-                return function(){document.removeEventListener("click", handleClick);}
+                height = open ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
+                SetStyle(step, (parseInt(step.style.height)+height)+"px");
             }
-        </script>
-        <script>
-            function SetStyle(inElement, inStyle){ for(var key in inStyle){inElement.style[key] = inStyle[key];} }
-            function SetState(inElement, inAttributes){ for(var key in inAttributes){inElement.setAttribute(key, inAttributes[key]);} }
-            function Collapse(inElement, inMode)
+        }
+    },
+    onStop: (inMenu, inEvent)=>
+    {
+        if(GetState(inMenu))
+        {
+            SetStyle(inMenu, "auto");
+        }
+        else
+        {
+            inMenu.querySelectorAll("[data-bind]").forEach(e=>
             {
-                SetStyle(inElement, {
-                    height:inElement.clientHeight+"px",
-                    transition:""
-                });
-                setTimeout(function(){ SetStyle(inElement, {
-                    height:(inMode ? inElement.scrollHeight : 0)+"px",
-                    transition:""
-                }); });
-            }
-            DetectTransition({
-                writeTo: "data-bind",
-                onStart: (inMenu, inEvent)=>
-                {
-                    var opening, i, step, check;
-                    opening = inMenu.getAttribute("data-open")=="true";
-                    if(opening)
-                    {
-                        inMenu.querySelectorAll("[data-bind]").forEach(function(inElement){ SetStyle(inElement, {
-                            height:"0px",
-                            transition:""
-                        }); });
-                    }
-                    for(i=0; i<inEvent.path.length-3; i++)
-                    {
-                        step = inEvent.path[i];
-                        check = step.getAttribute("data-bind");
-                        if(check && check !== "")
-                        {
-                            height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                            SetStyle(step, {
-                                height:(parseInt(step.style.height) + height )+"px",
-                                transition:""
-                            });
-                        }
-                    }
-                },
-                onStop: (inMenu, inEvent)=>
-                {
-                    var opening;
-                    opening = inMenu.getAttribute("data-open")=="true";
-                    if(opening)
-                    {
-                        SetStyle(inMenu, {
-                            height:"auto",
-                            transition:""
-                        });
-                    }
-                    else
-                    {
-                        inMenu.querySelectorAll("[data-bind]").forEach(e=>
-                        {
-                            SetState(e, {"data-bind":"", "data-open":false});
-                            SetStyle(e, {
-                                height:"0px",
-                                transition:"none"
-                            });
-                        })
-                    }
-                }
-            });
-            DetectClick({
-                selector:".Branch--Root",
-                onIn:function(inBranch, inEvent)
-                {
-                    if(inEvent.target.classList.contains("Branch__Button"))
-                    {
-                        var menu = inEvent.target.nextElementSibling;
-                        var status = menu.getAttribute("data-open")=="true";
-                        SetState(menu, {"data-open": !status});
-                        Collapse(menu, !status);
-                    }
-                },
-                onOut:function(inBranch, inEvent)
-                {
-                    var menu = inBranch.querySelector(".Branch__Menu");
-                    if(menu.getAttribute("data-open") == "true")
-                    {
-                        SetState(menu, {"data-open": false});
-                        Collapse(menu, false);
-                    }
-                }
-            });
-        </script>
+                SetState(e, false, "");
+                SetStyle(e, "0px", "none");
+            })
+        }
+    }
+});
+DetectClick({
+    selector:".Branch--Root",
+    onIn:function(inBranch, inEvent)
+    {
+        if(inEvent.target.classList.contains("Branch__Button"))
+        {
+            var menu = inEvent.target.nextElementSibling;
+            var status = GetState(menu);
+            SetState(menu, !status);
+            Collapse(menu, !status);
+        }
+    },
+    onOut:function(inBranch, inEvent)
+    {
+        var menu = inBranch.querySelector(".Branch__Menu");
+        if(GetState(menu))
+        {
+            SetState(menu, false);
+            Collapse(menu, false);
+        }
+    }
+});
+</script>
 
     </body>
 </html>
