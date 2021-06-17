@@ -8,17 +8,15 @@
                 display:block;
                 height:0;
                 opacity:0;
+                padding:0;
                 overflow:hidden;
-                transition:height 0.8s, opacity 0.4s;
-                border:2px dotted black;
+                background:rgba(128, 128, 128, 0.5);
+                border-radius:10px;
+                transition:height 1s, opacity 0.6s;
             }
             [data-open='true']
             {
                 opacity:1;
-            }
-            [data-bind='']
-            {
-                border:2px solid black;
             }
         </style>
 
@@ -27,39 +25,39 @@
 
         <nav>
             <ul>
-                <li><a>Leaf</a></li>
-                <li><a>Leaf</a></li>
+                <li><a href="#">Leaf</a></li>
+                <li><a href="#">Leaf</a></li>
                 <li class="Branch Branch--Root">
                     <span class="Branch__Button">Branch</span>
                     <span class="Branch__Menu" data-bind data-open="false">
                         <ul>
-                            <li><a>Leaf</a></li>
+                            <li><a href="#">Leaf</a></li>
                             <li class="Branch">
                                 <span class="Branch__Button">Branch</span>
                                 <span class="Branch__Menu" data-bind data-open="false">
                                     <ul>
-                                        <li><a>Leaf</a></li>
-                                        <li><a>Leaf</a></li>
-                                        <li><a>Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
                                     </ul>
                                 </span>
                             </li>
-                            <li><a>Leaf</a></li>
-                            <li><a>Leaf</a></li>
+                            <li><a href="#">Leaf</a></li>
+                            <li><a href="#">Leaf</a></li>
                             <li class="Branch">
                                 <span class="Branch__Button">Branch</span>
                                 <span class="Branch__Menu" data-bind data-open="false">
                                     <ul>
-                                        <li><a>Leaf</a></li>
-                                        <li><a>Leaf</a></li>
-                                        <li><a>Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
+                                        <li><a href="#">Leaf</a></li>
                                     </ul>
                                 </span>
                             </li>
                         </ul>
                     </span>
                 </li>
-                <li><a>Leaf</a></li>
+                <li><a href="#">Leaf</a></li>
             </ul>
         </nav>
 
@@ -77,7 +75,7 @@
                     if(!keys || keys == "")
                     {
                         keys = {};
-                        inHandlerStart(t);
+                        inHandlerStart(t, inEvent);
                     }
                     else
                     {
@@ -107,7 +105,7 @@
                         }
                     }
                     t.setAttribute(inAttribute, "");
-                    inHandlerStop(t);
+                    inHandlerStop(t, inEvent);
                 };
 
                 document.addEventListener("transitionrun", handleRun);
@@ -155,32 +153,45 @@
             }
 
             TransitionDetector("data-bind",
-            e=>
+            (inMenu, inEvent)=>
             {
-                if(e.getAttribute("data-open")=="true")
+                var opening;
+                var i, step, check;
+
+                opening = inMenu.getAttribute("data-open")=="true";
+
+                // interrupt parents
+                for(i=0; i<inEvent.path.length-3; i++)
                 {
-                    // starting to open
-                    e.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
+                    step = inEvent.path[i];
+                    check = step.getAttribute("data-bind");
+                    if(check && check !== "")
+                    {
+                        height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
+                        console.log("adjusting parent by", height);
+                        step.style.height = (parseInt(step.style.height) + height )+"px";
+                    }
                 }
-                else
+
+                // remove instant transitions on children
+                if(opening)
                 {
-                    // starting to close
+                    inMenu.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
                 }
             },
-            e=>
+            (inMenu, inEvent)=>
             {
-                if(e.getAttribute("data-open")=="true")
+                if(inMenu.getAttribute("data-open")=="true")
                 {
                     // done opening
-                    e.style.transition = "";
-                    e.style.overflow = "visible";
-                    e.style.height = "auto";
-                    console.log("done opening");
+                    inMenu.style.transition = "";
+                    inMenu.style.overflow = "visible";
+                    inMenu.style.height = "auto";
                 }
                 else
                 {
                     // done closing
-                    e.querySelectorAll("[data-bind]").forEach(e=>
+                    inMenu.querySelectorAll("[data-bind]").forEach(e=>
                     {
                         e.setAttribute("data-bind", "");
                         e.setAttribute("data-open", false);
@@ -196,8 +207,11 @@
             (inBranch, inButton, inMenu, inEvent)=>
             {
                 // close (click away)
-                inMenu.setAttribute("data-open", false);
-                Collapse(inMenu, false);
+                if(inMenu.getAttribute("data-open") == "true")
+                {
+                    inMenu.setAttribute("data-open", false);
+                    Collapse(inMenu, false);
+                }
             }
             ,
             (inBranch, inButton, inMenu, inEvent)=>
