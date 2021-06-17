@@ -6,17 +6,21 @@
             {
                 position:relative;
                 display:block;
-                height:0;
-                opacity:0;
                 padding:0;
+                height:0;
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
-                transition:height 1s, opacity 0.6s;
+            }
+            [data-open='false']
+            {
+                opacity:0;
+                transition:height 1.0s, opacity 0.4s;
             }
             [data-open='true']
             {
                 opacity:1;
+                transition:height 0.4s, opacity 1.0s;
             }
         </style>
 
@@ -197,7 +201,7 @@ DetectClick({
             var status = GetState(menu);
             SetState(menu, !status);
             SetStyle(menu, menu.clientHeight+"px");
-            setTimeout(function(){ SetStyle(menu, menu.scrollHeight+"px"); });
+            setTimeout(function(){ SetStyle(menu, (status?0:menu.scrollHeight)+"px"); });
         }
     },
     onOut:function(inBranch, inEvent)
