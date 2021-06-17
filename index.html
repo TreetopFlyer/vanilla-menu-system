@@ -66,7 +66,7 @@
             {
                 var inAttribute = inConfig.writeTo;
                 var inHandlerStart = inConfig.onStart;
-                var inHandlerStart = inConfig.onStop;
+                var inHandlerStop = inConfig.onStop;
                 var handleRun = function(inEvent)
                 {
                     var t, keys;
@@ -120,43 +120,33 @@
                     document.removeEventListener("transitionend", handleEnd);
                 };
             }
-
-            function DetectClick(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
+            function DetectClick(inConfig)
             {
                 function handleClick(e)
                 {
-                    document.querySelectorAll(inSelectorRoot).forEach(root=>
+                    document.querySelectorAll(inConfig.selector).forEach(function(root)
                     {
-                        if(!root.contains(e.target))
-                        {
-                            inHandlerClose(root, root.querySelector(inSelectorButton), root.querySelector(inSelectorMenu), e.target);
-                        }
-                    });
-                    document.querySelectorAll(inSelectorBranch).forEach(branch=>
-                    {
-                        if(e.target == branch.querySelector(inSelectorButton))
-                        {
-                            inHandlerToggle(branch, branch.querySelector(inSelectorButton), branch.querySelector(inSelectorMenu), e.target);
-                        }
+                        (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
                     });
                 }
-
                 document.addEventListener("click", handleClick);
                 return function(){document.removeEventListener("click", handleClick);}
             }
-        
         </script>
         <script>
-            
+
+            function SetStyle(inElement, inStyle){ for(var key in inStyle){inElement.style[key] = inStyle[key];} }
+            function SetAttribute(inElement, inAttributes){ for(var key in inAttributes){inElement.setAttribute(key, inAttributes[key]);} }
             function Collapse(inElement, inMode)
             {
-                inElement.style.height = inElement.clientHeight+"px";
-                inElement.style.overflow = "hidden";
-                setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
+                var cssBefore = {height:inElement.clientHeight+"px", overflow:"hidden"};
+                var cssAfter = {height:(inMode ? inElement.scrollHeight : 0)+"px"};
+                SetStyle(inElement, cssBefore);
+                setTimeout(function(){SetStyle(inElement, cssAfter)});
             }
 
-            DetectTransition(
-            {
+
+            DetectTransition({
                 writeTo: "data-bind",
                 onStart: (inMenu, inEvent)=>
                 {
@@ -188,45 +178,44 @@
                     if(inMenu.getAttribute("data-open")=="true")
                     {
                         // done opening
-                        inMenu.style.transition = "";
-                        inMenu.style.overflow = "visible";
-                        inMenu.style.height = "auto";
+                        SetStyle(inMenu, {transition:"", overflow:"visible", height:"auto"});
                     }
                     else
                     {
                         // done closing
                         inMenu.querySelectorAll("[data-bind]").forEach(e=>
                         {
-                            e.setAttribute("data-bind", "");
-                            e.setAttribute("data-open", false);
-                            e.style.transition = "none";
-                            e.style.overflow = "hidden";
-                            e.style.height = "0px";
+                            SetAttribute(e, {"data-bind":"", "data-open":false});
+                            SetStyle(e, {transition:"none", overflow:"hidden", height:"0px"});
                         })
                     }
                 }
             }
             );
         
-            DetectClick(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu",
-            (inBranch, inButton, inMenu, inEvent)=>
-            {
-                // close (click away)
-                if(inMenu.getAttribute("data-open") == "true")
+            DetectClick({
+                selector:".Branch--Root",
+                onIn:(inBranch, inEvent)=>
                 {
-                    inMenu.setAttribute("data-open", false);
-                    Collapse(inMenu, false);
+                    // toggle
+                    if(inEvent.target.classList.contains("Branch__Button"))
+                    {
+                        var menu = inEvent.target.nextElementSibling;
+                        var status = menu.getAttribute("data-open")=="true";
+                        SetAttribute(menu, {"data-open": !status});
+                        Collapse(menu, !status);
+                    }
+                },
+                onOut:(inBranch, inEvent)=>
+                {
+                    var menu = inBranch.querySelector(".Branch__Menu");
+                    if(menu.getAttribute("data-open") == "true")
+                    {
+                        SetAttribute(menu, {"data-open": false});
+                        Collapse(menu, false);
+                    }
                 }
-            }
-            ,
-            (inBranch, inButton, inMenu, inEvent)=>
-            {
-                // toggle
-                var status = inMenu.getAttribute("data-open")=="true";
-                inMenu.setAttribute("data-open", !status);
-                Collapse(inMenu, !status);
-            }
-            );
+            });
 
         </script>
 
