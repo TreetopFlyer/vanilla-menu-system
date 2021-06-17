@@ -2,64 +2,111 @@
 <html>
     <head>
         <style>
-            .Branch__Menu
+            ul[data-open]
             {
                 position:relative;
                 display:block;
                 padding:0;
+                margin:0;
                 height:0;
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
             }
-            [data-open='false']
+            ul[data-open='false']
             {
+                left:-10px;
                 opacity:0;
-                transition:height 1.0s, opacity 0.4s;
+                transition:height 0.4s, opacity 0.4s, left 0.6s;
             }
-            [data-open='true']
+            ul[data-open='true']
             {
+                left:0px;
                 opacity:1;
-                transition:height 0.4s, opacity 1.0s;
+                transition:height 0.4s, opacity 1.0s, left 0.6s;
             }
         </style>
 
+        <!-- tier 0 -->
+        <style>
+            .Tier0 > li
+            {
+                position:relative;
+                display:inline-block;
+                vertical-align:top;
+            }
+            .Tier0 > li > *:first-child
+            {
+                display: block;
+                padding: 5px 10px 5px 10px;
+                border-radius: 8px;
+                background: #5588a1;
+                color: #fff;
+                text-transform: uppercase;
+                text-decoration:none;
+                font-weight: 100;
+                font-family: sans-serif;
+                font-size: 12px;
+            }
+            .Tier0 > li > span:before
+            {
+                content:"+";
+            }
+            .Tier0 > li > ul
+            {
+                position:absolute;
+                top:100%;
+                min-width:100%;
+            }
+        </style>
+
+        <!-- tier 1-->
+        <style>
+            .Tier1 span, .Tier1 a
+            {
+                display:block;
+                padding: 6px 12px 6px 12px;
+                color: #fff;
+                text-decoration:none;
+                font-weight: 100;
+                font-family: sans-serif;
+                font-size: 12px;
+            }
+            .Tier1 ul
+            {
+                border-radius:0px;
+            }
+        </style>
     </head>
     <body>
 
         <nav>
-            <ul>
+            <ul class="Tier0">
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
-                <li class="Branch Branch--Root">
-                    <span class="Branch__Button">Branch</span>
-                    <span class="Branch__Menu" data-bind data-open="false">
-                        <ul>
-                            <li><a href="#">Leaf</a></li>
-                            <li class="Branch">
-                                <span class="Branch__Button">Branch</span>
-                                <span class="Branch__Menu" data-bind data-open="false">
-                                    <ul>
-                                        <li><a href="#">Leaf</a></li>
-                                        <li><a href="#">Leaf</a></li>
-                                        <li><a href="#">Leaf</a></li>
-                                    </ul>
-                                </span>
-                            </li>
-                            <li><a href="#">Leaf</a></li>
-                            <li><a href="#">Leaf</a></li>
-                            <li class="Branch">
-                                <span class="Branch__Button">Branch</span>
-                                <span class="Branch__Menu" data-bind data-open="false">
-                                    <ul>
-                                        <li><a href="#">Leaf</a></li>
-                                        <li><a href="#">Leaf</a></li>
-                                        <li><a href="#">Leaf</a></li>
-                                    </ul>
-                                </span>
-                            </li>
-                        </ul>
-                    </span>
+                <li>
+                    <span>Branch</span>
+                    <ul class="Tier1" data-bind data-open="false">
+                        <li><a href="#">Leaf</a></li>
+                        <li>
+                            <span>Branch</span>
+                            <ul class="Tier2" data-bind data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#">Leaf</a></li>
+                        <li><a href="#">Leaf</a></li>
+                        <li>
+                            <span>Branch</span>
+                            <ul class="Tier2" data-bind data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                    </ul>
                 </li>
                 <li><a href="#">Leaf</a></li>
             </ul>
@@ -147,7 +194,7 @@ function SetStyle(inElement, inHeight, inTransition)
 }
 function SetState(inElement, inOpen, inTransition)
 {
-    if(inTransition != null){ inElement.setAttribute(AttributeLive, inTransition); }
+    if(inTransition == false){ inElement.setAttribute(AttributeLive, ""); }
     inElement.setAttribute(AttributeOpen, inOpen);
 }
 function GetState(inElement, inTransition)
@@ -155,18 +202,43 @@ function GetState(inElement, inTransition)
     if(inTransition != null){ return (inElement.getAttribute(AttributeLive) != ""); }
     return inElement.getAttribute(AttributeOpen)=="true";
 }
+
+function Collapse(inMenu, inButton, inMode, inInstant)
+{
+    var mode = inMode==null ? !GetState(inMenu) : inMode;
+    var size = (mode?inMenu.scrollHeight:0)+"px";
+
+    if(inInstant)
+    {
+        SetState(inMenu, mode, false);
+        SetStyle(inMenu, size, "none");
+    }
+    else
+    {
+        SetState(inMenu, mode);
+        SetStyle(inMenu, inMenu.clientHeight+"px");
+        setTimeout(function(){ SetStyle(inMenu, size); });
+    }
+    SetState(inButton, mode);
+}
+
 DetectTransition({
     writeTo: AttributeLive,
-    onStart: (inMenu, inEvent)=>
+    onStart:function(inMenu, inEvent)
     {
         var open, i, step;
         open = GetState(inMenu);
         if(open)
         {
-            inMenu.querySelectorAll(".Branch__Menu").forEach(function(inElement){ SetStyle(inElement, "0px", ""); });
+            // clear instant transitions on children
+            inMenu.querySelectorAll("ul").forEach(function(inElement)
+            {
+                SetStyle(inElement, "0px", "");
+            });
         }
         for(i=0; i<inEvent.path.length-3; i++)
         {
+            // interrupt moving parents
             step = inEvent.path[i];
             if(GetState(step, true))
             {
@@ -175,43 +247,47 @@ DetectTransition({
             }
         }
     },
-    onStop: (inMenu, inEvent)=>
+    onStop:function(inMenu, inEvent)
     {
         if(GetState(inMenu))
         {
+            // clear locked height
             SetStyle(inMenu, "auto");
         }
         else
         {
-            inMenu.querySelectorAll(".Branch__Menu").forEach(e=>
+            // instant transition child menus
+            inMenu.querySelectorAll("ul").forEach(function(inElement)
             {
-                SetState(e, false, "");
-                SetStyle(e, "0px", "none");
+                // COLLAPSE INSTANT
+                Collapse(inElement, inElement.previousElementSibling, false, true);
             })
         }
     }
 });
 DetectClick({
-    selector:".Branch--Root",
+    selector:"nav>ul>li",
     onIn:function(inBranch, inEvent)
     {
-        if(inEvent.target.classList.contains("Branch__Button"))
+        var menu;
+        if(inEvent.target.nodeName == "SPAN")
         {
-            var menu = inEvent.target.nextElementSibling;
-            var status = GetState(menu);
-            SetState(menu, !status);
-            SetStyle(menu, menu.clientHeight+"px");
-            setTimeout(function(){ SetStyle(menu, (status?0:menu.scrollHeight)+"px"); });
+            menu = inEvent.target.nextElementSibling;
+            // COLLAPSE TOGGLE
+            if(menu)
+            {
+                Collapse(menu, inEvent.target, null);
+            }
         }
     },
     onOut:function(inBranch, inEvent)
     {
-        var menu = inBranch.querySelector(".Branch__Menu");
-        if(GetState(menu))
+        var menu;
+        // COLLAPSE NORMAL
+        menu = inBranch.querySelector("ul");
+        if(menu)
         {
-            SetState(menu, false);
-            SetStyle(menu, menu.clientHeight+"px");
-            setTimeout(function(){ SetStyle(menu, "0px"); });
+            Collapse(menu, menu.previousElementSibling, false);
         }
     }
 });
