@@ -134,28 +134,32 @@
             }
         </script>
         <script>
-
             function SetStyle(inElement, inStyle){ for(var key in inStyle){inElement.style[key] = inStyle[key];} }
-            function SetAttribute(inElement, inAttributes){ for(var key in inAttributes){inElement.setAttribute(key, inAttributes[key]);} }
+            function SetState(inElement, inAttributes){ for(var key in inAttributes){inElement.setAttribute(key, inAttributes[key]);} }
             function Collapse(inElement, inMode)
             {
-                var cssBefore = {height:inElement.clientHeight+"px", overflow:"hidden"};
-                var cssAfter = {height:(inMode ? inElement.scrollHeight : 0)+"px"};
-                SetStyle(inElement, cssBefore);
-                setTimeout(function(){SetStyle(inElement, cssAfter)});
+                SetStyle(inElement, {
+                    height:inElement.clientHeight+"px",
+                    transition:""
+                });
+                setTimeout(function(){ SetStyle(inElement, {
+                    height:(inMode ? inElement.scrollHeight : 0)+"px",
+                    transition:""
+                }); });
             }
-
-
             DetectTransition({
                 writeTo: "data-bind",
                 onStart: (inMenu, inEvent)=>
                 {
-                    var opening;
-                    var i, step, check;
-
+                    var opening, i, step, check;
                     opening = inMenu.getAttribute("data-open")=="true";
-
-                    // interrupt parents
+                    if(opening)
+                    {
+                        inMenu.querySelectorAll("[data-bind]").forEach(function(inElement){ SetStyle(inElement, {
+                            height:"0px",
+                            transition:""
+                        }); });
+                    }
                     for(i=0; i<inEvent.path.length-3; i++)
                     {
                         step = inEvent.path[i];
@@ -163,60 +167,59 @@
                         if(check && check !== "")
                         {
                             height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                            step.style.height = (parseInt(step.style.height) + height )+"px";
+                            SetStyle(step, {
+                                height:(parseInt(step.style.height) + height )+"px",
+                                transition:""
+                            });
                         }
-                    }
-
-                    // remove instant transitions on children
-                    if(opening)
-                    {
-                        inMenu.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
                     }
                 },
                 onStop: (inMenu, inEvent)=>
                 {
-                    if(inMenu.getAttribute("data-open")=="true")
+                    var opening;
+                    opening = inMenu.getAttribute("data-open")=="true";
+                    if(opening)
                     {
-                        // done opening
-                        SetStyle(inMenu, {transition:"", overflow:"visible", height:"auto"});
+                        SetStyle(inMenu, {
+                            height:"auto",
+                            transition:""
+                        });
                     }
                     else
                     {
-                        // done closing
                         inMenu.querySelectorAll("[data-bind]").forEach(e=>
                         {
-                            SetAttribute(e, {"data-bind":"", "data-open":false});
-                            SetStyle(e, {transition:"none", overflow:"hidden", height:"0px"});
+                            SetState(e, {"data-bind":"", "data-open":false});
+                            SetStyle(e, {
+                                height:"0px",
+                                transition:"none"
+                            });
                         })
                     }
                 }
-            }
-            );
-        
+            });
             DetectClick({
                 selector:".Branch--Root",
-                onIn:(inBranch, inEvent)=>
+                onIn:function(inBranch, inEvent)
                 {
-                    // toggle
                     if(inEvent.target.classList.contains("Branch__Button"))
                     {
                         var menu = inEvent.target.nextElementSibling;
                         var status = menu.getAttribute("data-open")=="true";
-                        SetAttribute(menu, {"data-open": !status});
+                        SetState(menu, {"data-open": !status});
                         Collapse(menu, !status);
                     }
                 },
-                onOut:(inBranch, inEvent)=>
+                onOut:function(inBranch, inEvent)
                 {
                     var menu = inBranch.querySelector(".Branch__Menu");
                     if(menu.getAttribute("data-open") == "true")
                     {
-                        SetAttribute(menu, {"data-open": false});
+                        SetState(menu, {"data-open": false});
                         Collapse(menu, false);
                     }
                 }
             });
-
         </script>
 
     </body>
