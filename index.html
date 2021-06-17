@@ -6,17 +6,21 @@
             {
                 position:relative;
                 display:block;
-                height:0;
-                opacity:0;
                 padding:0;
+                height:0;
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
-                transition:height 1s, opacity 0.6s;
+            }
+            [data-open='false']
+            {
+                opacity:0;
+                transition:height 1.0s, opacity 0.4s;
             }
             [data-open='true']
             {
                 opacity:1;
+                transition:height 0.4s, opacity 1.0s;
             }
         </style>
 
@@ -61,169 +65,157 @@
             </ul>
         </nav>
 
-        <script>
-            function TransitionDetector(inAttribute, inHandlerStart, inHandlerStop)
+<script>
+function DetectTransition(inConfig)
+{
+    var inAttribute = inConfig.writeTo;
+    var inHandlerStart = inConfig.onStart;
+    var inHandlerStop = inConfig.onStop;
+    var handleRun = function(inEvent)
+    {
+        var t, keys;
+
+        t = inEvent.target;
+        keys = t.getAttribute(inAttribute);
+        if(keys === null){return;}
+
+        if(!keys || keys == "")
+        {
+            keys = {};
+            inHandlerStart(t, inEvent);
+        }
+        else
+        {
+            keys = JSON.parse(keys);
+        }
+
+        if(keys[inEvent.propertyName]){return;}
+        keys[inEvent.propertyName] = true;
+        t.setAttribute(inAttribute, JSON.stringify(keys));
+    };
+    var handleEnd = function(inEvent)
+    {
+        var t, keys;
+
+        t = inEvent.target;
+        keys = t.getAttribute(inAttribute);
+        if(keys === null){return;}
+
+        keys = JSON.parse(keys);
+        keys[inEvent.propertyName] = false;
+        for(var key in keys)
+        {
+            if(keys[key] == true)
             {
-                var handleRun = function(inEvent)
-                {
-                    var t, keys;
-
-                    t = inEvent.target;
-                    keys = t.getAttribute(inAttribute);
-                    if(keys === null){return;}
-
-                    if(!keys || keys == "")
-                    {
-                        keys = {};
-                        inHandlerStart(t, inEvent);
-                    }
-                    else
-                    {
-                        keys = JSON.parse(keys);
-                    }
-
-                    if(keys[inEvent.propertyName]){return;}
-                    keys[inEvent.propertyName] = true;
-                    t.setAttribute(inAttribute, JSON.stringify(keys));
-                };
-                var handleEnd = function(inEvent)
-                {
-                    var t, keys;
-
-                    t = inEvent.target;
-                    keys = t.getAttribute(inAttribute);
-                    if(keys === null){return;}
-
-                    keys = JSON.parse(keys);
-                    keys[inEvent.propertyName] = false;
-                    for(var key in keys)
-                    {
-                        if(keys[key] == true)
-                        {
-                            t.setAttribute(inAttribute, JSON.stringify(keys));
-                            return;
-                        }
-                    }
-                    t.setAttribute(inAttribute, "");
-                    inHandlerStop(t, inEvent);
-                };
-
-                document.addEventListener("transitionrun", handleRun);
-                document.addEventListener("transitionend", handleEnd);
-
-                return function()
-                {
-                    document.removeEventListener("transitionrun", handleRun);
-                    document.removeEventListener("transitionend", handleEnd);
-                };
+                t.setAttribute(inAttribute, JSON.stringify(keys));
+                return;
             }
+        }
+        t.setAttribute(inAttribute, "");
+        inHandlerStop(t, inEvent);
+    };
 
-            function ClickDetector(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
+    document.addEventListener("transitionrun", handleRun);
+    document.addEventListener("transitionend", handleEnd);
+
+    return function()
+    {
+        document.removeEventListener("transitionrun", handleRun);
+        document.removeEventListener("transitionend", handleEnd);
+    };
+}
+function DetectClick(inConfig)
+{
+    function handleClick(e)
+    {
+        document.querySelectorAll(inConfig.selector).forEach(function(root)
+        {
+            (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
+        });
+    }
+    document.addEventListener("click", handleClick);
+    return function(){document.removeEventListener("click", handleClick);}
+}
+</script>
+<script>
+var AttributeOpen = "data-open";
+var AttributeLive = "data-bind";
+function SetStyle(inElement, inHeight, inTransition)
+{
+    if(inTransition != null){ inElement.style.transition = inTransition; }
+    inElement.style.height = inHeight;
+}
+function SetState(inElement, inOpen, inTransition)
+{
+    if(inTransition != null){ inElement.setAttribute(AttributeLive, inTransition); }
+    inElement.setAttribute(AttributeOpen, inOpen);
+}
+function GetState(inElement, inTransition)
+{
+    if(inTransition != null){ return (inElement.getAttribute(AttributeLive) != ""); }
+    return inElement.getAttribute(AttributeOpen)=="true";
+}
+DetectTransition({
+    writeTo: AttributeLive,
+    onStart: (inMenu, inEvent)=>
+    {
+        var open, i, step;
+        open = GetState(inMenu);
+        if(open)
+        {
+            inMenu.querySelectorAll(".Branch__Menu").forEach(function(inElement){ SetStyle(inElement, "0px", ""); });
+        }
+        for(i=0; i<inEvent.path.length-3; i++)
+        {
+            step = inEvent.path[i];
+            if(GetState(step, true))
             {
-                function handleClick(e)
-                {
-                    document.querySelectorAll(inSelectorRoot).forEach(root=>
-                    {
-                        if(!root.contains(e.target))
-                        {
-                            inHandlerClose(root, root.querySelector(inSelectorButton), root.querySelector(inSelectorMenu), e.target);
-                        }
-                    });
-                    document.querySelectorAll(inSelectorBranch).forEach(branch=>
-                    {
-                        if(e.target == branch.querySelector(inSelectorButton))
-                        {
-                            inHandlerToggle(branch, branch.querySelector(inSelectorButton), branch.querySelector(inSelectorMenu), e.target);
-                        }
-                    });
-                }
-
-                document.addEventListener("click", handleClick);
-                return function(){document.removeEventListener("click", handleClick);}
+                height = open ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
+                SetStyle(step, (parseInt(step.style.height)+height)+"px");
             }
-        
-        </script>
-        <script>
-            
-            function Collapse(inElement, inMode)
+        }
+    },
+    onStop: (inMenu, inEvent)=>
+    {
+        if(GetState(inMenu))
+        {
+            SetStyle(inMenu, "auto");
+        }
+        else
+        {
+            inMenu.querySelectorAll(".Branch__Menu").forEach(e=>
             {
-                inElement.style.height = inElement.clientHeight+"px";
-                inElement.style.overflow = "hidden";
-                setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
-            }
-
-            TransitionDetector("data-bind",
-            (inMenu, inEvent)=>
-            {
-                var opening;
-                var i, step, check;
-
-                opening = inMenu.getAttribute("data-open")=="true";
-
-                // interrupt parents
-                for(i=0; i<inEvent.path.length-3; i++)
-                {
-                    step = inEvent.path[i];
-                    check = step.getAttribute("data-bind");
-                    if(check && check !== "")
-                    {
-                        height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                        console.log("adjusting parent by", height);
-                        step.style.height = (parseInt(step.style.height) + height )+"px";
-                    }
-                }
-
-                // remove instant transitions on children
-                if(opening)
-                {
-                    inMenu.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
-                }
-            },
-            (inMenu, inEvent)=>
-            {
-                if(inMenu.getAttribute("data-open")=="true")
-                {
-                    // done opening
-                    inMenu.style.transition = "";
-                    inMenu.style.overflow = "visible";
-                    inMenu.style.height = "auto";
-                }
-                else
-                {
-                    // done closing
-                    inMenu.querySelectorAll("[data-bind]").forEach(e=>
-                    {
-                        e.setAttribute("data-bind", "");
-                        e.setAttribute("data-open", false);
-                        e.style.transition = "none";
-                        e.style.overflow = "hidden";
-                        e.style.height = "0px";
-                    })
-                }
-            }
-            );
-        
-            ClickDetector(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu",
-            (inBranch, inButton, inMenu, inEvent)=>
-            {
-                // close (click away)
-                if(inMenu.getAttribute("data-open") == "true")
-                {
-                    inMenu.setAttribute("data-open", false);
-                    Collapse(inMenu, false);
-                }
-            }
-            ,
-            (inBranch, inButton, inMenu, inEvent)=>
-            {
-                // toggle
-                var status = inMenu.getAttribute("data-open")=="true";
-                inMenu.setAttribute("data-open", !status);
-                Collapse(inMenu, !status);
-            }
-            );
-
-        </script>
+                SetState(e, false, "");
+                SetStyle(e, "0px", "none");
+            })
+        }
+    }
+});
+DetectClick({
+    selector:".Branch--Root",
+    onIn:function(inBranch, inEvent)
+    {
+        if(inEvent.target.classList.contains("Branch__Button"))
+        {
+            var menu = inEvent.target.nextElementSibling;
+            var status = GetState(menu);
+            SetState(menu, !status);
+            SetStyle(menu, menu.clientHeight+"px");
+            setTimeout(function(){ SetStyle(menu, (status?0:menu.scrollHeight)+"px"); });
+        }
+    },
+    onOut:function(inBranch, inEvent)
+    {
+        var menu = inBranch.querySelector(".Branch__Menu");
+        if(GetState(menu))
+        {
+            SetState(menu, false);
+            SetStyle(menu, menu.clientHeight+"px");
+            setTimeout(function(){ SetStyle(menu, "0px"); });
+        }
+    }
+});
+</script>
 
     </body>
 </html>
