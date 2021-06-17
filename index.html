@@ -62,8 +62,11 @@
         </nav>
 
         <script>
-            function TransitionDetector(inAttribute, inHandlerStart, inHandlerStop)
+            function DetectTransition(inConfig)
             {
+                var inAttribute = inConfig.writeTo;
+                var inHandlerStart = inConfig.onStart;
+                var inHandlerStart = inConfig.onStop;
                 var handleRun = function(inEvent)
                 {
                     var t, keys;
@@ -118,7 +121,7 @@
                 };
             }
 
-            function ClickDetector(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
+            function DetectClick(inSelectorRoot, inSelectorBranch, inSelectorButton, inSelectorMenu, inHandlerClose, inHandlerToggle)
             {
                 function handleClick(e)
                 {
@@ -152,58 +155,60 @@
                 setTimeout(function(){ inElement.style.height = (inMode ? inElement.scrollHeight : 0)+"px"; });
             }
 
-            TransitionDetector("data-bind",
-            (inMenu, inEvent)=>
+            DetectTransition(
             {
-                var opening;
-                var i, step, check;
-
-                opening = inMenu.getAttribute("data-open")=="true";
-
-                // interrupt parents
-                for(i=0; i<inEvent.path.length-3; i++)
+                writeTo: "data-bind",
+                onStart: (inMenu, inEvent)=>
                 {
-                    step = inEvent.path[i];
-                    check = step.getAttribute("data-bind");
-                    if(check && check !== "")
+                    var opening;
+                    var i, step, check;
+
+                    opening = inMenu.getAttribute("data-open")=="true";
+
+                    // interrupt parents
+                    for(i=0; i<inEvent.path.length-3; i++)
                     {
-                        height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                        console.log("adjusting parent by", height);
-                        step.style.height = (parseInt(step.style.height) + height )+"px";
+                        step = inEvent.path[i];
+                        check = step.getAttribute("data-bind");
+                        if(check && check !== "")
+                        {
+                            height = opening ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
+                            step.style.height = (parseInt(step.style.height) + height )+"px";
+                        }
                     }
-                }
 
-                // remove instant transitions on children
-                if(opening)
-                {
-                    inMenu.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
-                }
-            },
-            (inMenu, inEvent)=>
-            {
-                if(inMenu.getAttribute("data-open")=="true")
-                {
-                    // done opening
-                    inMenu.style.transition = "";
-                    inMenu.style.overflow = "visible";
-                    inMenu.style.height = "auto";
-                }
-                else
-                {
-                    // done closing
-                    inMenu.querySelectorAll("[data-bind]").forEach(e=>
+                    // remove instant transitions on children
+                    if(opening)
                     {
-                        e.setAttribute("data-bind", "");
-                        e.setAttribute("data-open", false);
-                        e.style.transition = "none";
-                        e.style.overflow = "hidden";
-                        e.style.height = "0px";
-                    })
+                        inMenu.querySelectorAll("[data-bind]").forEach(e=>e.style.transition = "");
+                    }
+                },
+                onStop: (inMenu, inEvent)=>
+                {
+                    if(inMenu.getAttribute("data-open")=="true")
+                    {
+                        // done opening
+                        inMenu.style.transition = "";
+                        inMenu.style.overflow = "visible";
+                        inMenu.style.height = "auto";
+                    }
+                    else
+                    {
+                        // done closing
+                        inMenu.querySelectorAll("[data-bind]").forEach(e=>
+                        {
+                            e.setAttribute("data-bind", "");
+                            e.setAttribute("data-open", false);
+                            e.style.transition = "none";
+                            e.style.overflow = "hidden";
+                            e.style.height = "0px";
+                        })
+                    }
                 }
             }
             );
         
-            ClickDetector(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu",
+            DetectClick(".Branch--Root", ".Branch", ".Branch__Button", ".Branch__Menu",
             (inBranch, inButton, inMenu, inEvent)=>
             {
                 // close (click away)
