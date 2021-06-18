@@ -2,25 +2,30 @@
 <html>
     <head>
         <style>
+            [data-test='true']
+            {
+                white-space: nowrap;
+            }
             ul[data-open]
             {
                 position:relative;
                 display:block;
                 padding:0;
                 margin:0;
-                height:0;
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
             }
             ul[data-open='false']
             {
+                height:0;
                 left:-10px;
                 opacity:0;
                 transition:height 0.4s, opacity 0.4s, left 0.6s;
             }
             ul[data-open='true']
             {
+                height:auto;
                 left:0px;
                 opacity:1;
                 transition:height 0.4s, opacity 1.0s, left 0.6s;
@@ -205,18 +210,22 @@ function GetState(inElement, inTransition)
 
 function Collapse(inMenu, inButton, inMode, inInstant)
 {
+    var check = function(){return getComputedStyle(inMenu).getPropertyValue("height");}
     var mode = inMode==null ? !GetState(inMenu) : inMode;
     var size = (mode?inMenu.scrollHeight:0)+"px";
-
+    var prev = check();
+    var next;
     if(inInstant)
     {
         SetState(inMenu, mode, false);
+        next = check();
         SetStyle(inMenu, size, "none");
     }
     else
     {
         SetState(inMenu, mode);
-        SetStyle(inMenu, inMenu.clientHeight+"px");
+        next = check();
+        SetStyle(inMenu, inMenu.clientHeight+"px", "");
         setTimeout(function(){ SetStyle(inMenu, size); });
     }
     SetState(inButton, mode);
