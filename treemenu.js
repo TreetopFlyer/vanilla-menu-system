@@ -3,19 +3,16 @@ function DetectTransition(inConfig)
     var isValid = function(inTarget){return }
     var handleRun = function(inEvent)
     {
-        var t, keys, first;
+        var t, keys;
         t = inEvent.target;
         if(!t.hasAttribute(inConfig.AttributeCheck)){return;}
         keys = t.getAttribute(inConfig.AttributeWrite);
         if(!keys || keys == "")
         {
-            first = true;
             keys = {};
-            inConfig.HandlerStart(t, inEvent);
         }
         else
         {
-            first= false;
             keys = JSON.parse(keys);
         }
         if(keys[inEvent.propertyName]){return;}
@@ -49,36 +46,6 @@ function DetectTransition(inConfig)
         document.removeEventListener("transitionend", handleEnd);
     };
 }
-function DetectAway(inConfig)
-{
-    function handleClick(inEvent)
-    {
-        var i, roots, root, matches;
-        roots = document.querySelectorAll("["+inConfig.AttributeRoot+"]");
-        matches = [];
-        if(roots)
-        {
-            for(i=0; i<roots.length; i++)
-            {
-                root = roots[i];
-                if(root.contains(inEvent.target))
-                {
-                    matches.push(root);
-                }
-                else
-                {
-                    inConfig.HandlerAway(root, inEvent);
-                }
-            }
-            if(matches.length)
-            {
-                inConfig.HandlerInside(matches, inEvent);
-            }
-        }
-    }
-    document.addEventListener("click", handleClick);
-    return function(){document.removeEventListener("click", handleClick);}
-}
 function TreeMenu(inAttributes)
 {
     var Attributes = inAttributes;
@@ -111,13 +78,13 @@ function TreeMenu(inAttributes)
     }
     function Collapse(inBranch, inMode, inInstant)
     {
-        var menu, button, mode, size;
+        var menu, button, mode, size, state;
         menu = inBranch.querySelector("["+Attributes.Menu+"]");
         button = inBranch.querySelector("["+Attributes.Button+"]");
-        var stateOriginal = GetState(menu);
-        mode = inMode==null ? !stateOriginal : inMode;
-        if(mode == stateOriginal){return;}
-
+        state = GetState(menu);
+        if(inMode == state){return;}
+        mode = inMode==null ? !state : inMode;
+        
         size = (mode?menu.scrollHeight:0)+"px";
         if(inInstant)
         {
@@ -152,7 +119,7 @@ function TreeMenu(inAttributes)
         else
         {
             i = inStart.parentNode;
-            while(i != document)
+            while(i != document.body)
             {
                 if(i.hasAttribute(inAttribute))
                 {
@@ -165,7 +132,6 @@ function TreeMenu(inAttributes)
     DetectTransition({
         AttributeWrite: Attributes.Live,
         AttributeCheck: Attributes.Open,
-        HandlerStart:function(inMenu, inEvent){},
         HandlerStop:function(inMenu, inEvent)
         {
             if(GetState(inMenu))
@@ -178,83 +144,54 @@ function TreeMenu(inAttributes)
             }
         }
     });
-
-    document.addEventListener("click", function(inEvent)
+    function HandleClick(inEvent)
     {
-        var toggleBranch = false;
-        var toggleMode;
+        var toggleBranch, activeCollapse, roots, root, i;
+
         if(inEvent.target.hasAttribute(Attributes.Button))
         {
             Traverse(inEvent.target, false, Attributes.Branch, function(inBranch)
             {
                 toggleBranch = inBranch;
-                toggleMode = Collapse(inBranch, null);
+                Collapse(inBranch, null);
                 return true;
             });
         }
 
-        var roots = document.querySelectorAll("["+Attributes.Root+"]");
-        var root;
-        var last;
-        var i;
+        roots = document.querySelectorAll("["+Attributes.Root+"]");
         for(i=0; i<roots.length; i++)
         {
-            /*
-            root cannot collapse if:
-            - it contains the event target
-            - a parent menu is already collapsing
-            - a parent root is also eligible for collapse
-            */
             root = roots[i];
             if(!root.contains(inEvent.target))
             {
-                // this root is eligible for collapse
-
-                // check if there are any parent roots that are also eligible for collapse
-                last = root;
                 Traverse(root, false, Attributes.Root, function(inParentRoot)
                 {
                     if(!inParentRoot.contains(inEvent.target))
                     {
-                        last = inParentRoot;
+                        root = inParentRoot;
                     }
-                });
-
-                // check if the collapse is already happening above
-                var isAlreadyCollapsing = false;
-                Traverse(last, false, Attributes.Root, function(inParentRoot)
-                {
-                    if(inParentRoot == toggleBranch)
+                    else
                     {
-                        isAlreadyCollapsing = true;
                         return true;
                     }
                 });
-                if(!isAlreadyCollapsing)
+
+                var activeCollapse = false;
+                Traverse(root, false, Attributes.Root, function(inParentRoot)
                 {
-                    Collapse(last, false);
+                    if(inParentRoot == toggleBranch)
+                    {
+                        activeCollapse = true;
+                        return true;
+                    }
+                });
+                if(!activeCollapse)
+                {
+                    Collapse(root, false);
                 }
             }
         }
-    });
-    /*
-    DetectAway({
-        AttributeRoot:Attributes.Root,
-        HandlerInside:function(inRoot, inEvent)
-        {
-            if(!inEvent.target.hasAttribute(Attributes.Button)){ return; }
-            Traverse(inEvent.target, false, Attributes.Branch, function(inBranch)
-            {
-                console.log("      ...toggling", inBranch.id);
-                Collapse(inBranch, null);
-                return true;
-            });
-        },
-        HandlerAway:function(inRoot, inEvent)
-        {   
-            //console.log("  ...collapsing", inRoot.id);
-            Collapse(inRoot, false);
-        }
-    });
-    */
+    }
+    document.addEventListener("click", HandleClick);
+    return function(){ document.removeEventListener("click", HandleClick); }
 }
