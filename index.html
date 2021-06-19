@@ -115,11 +115,9 @@
 function DetectTransition(inConfig)
 {
     var isValid = function(inTarget){return }
-
     var handleRun = function(inEvent)
     {
         var t, keys, first;
-
         t = inEvent.target;
         if(!t.hasAttribute(inConfig.attrCheck)){return;}
         keys = t.getAttribute(inConfig.attrWrite);
@@ -141,7 +139,6 @@ function DetectTransition(inConfig)
     var handleEnd = function(inEvent)
     {
         var t, keys;
-
         t = inEvent.target;
         if(!t.hasAttribute(inConfig.attrCheck)){return;}
         keys = t.getAttribute(inConfig.attrWrite);
@@ -158,10 +155,8 @@ function DetectTransition(inConfig)
         t.setAttribute(inConfig.attrWrite, "");
         inConfig.onStop(t, inEvent);
     };
-
     document.addEventListener("transitionrun", handleRun);
     document.addEventListener("transitionend", handleEnd);
-
     return function()
     {
         document.removeEventListener("transitionrun", handleRun);
@@ -186,138 +181,126 @@ function DetectAway(inConfig)
     document.addEventListener("click", handleClick);
     return function(){document.removeEventListener("click", handleClick);}
 }
-</script>
-<script>
-var AttributeOpen = "data-open";
-var AttributeLive = "data-bind";
-function SetStyle(inElement, inHeight, inTransition)
+function SetupNav(inAttributes)
 {
-    if(inTransition != null){ inElement.style.transition = inTransition; }
-    inElement.style.height = inHeight;
-}
-function SetState(inElement, inOpen, inTransition)
-{
-    if(inTransition == false){ inElement.setAttribute(AttributeLive, ""); }
-    inElement.setAttribute(AttributeOpen, inOpen);
-}
-function GetState(inElement, inTransition)
-{
-    if(inTransition != null)
+    var Attributes = inAttributes;
+    function SetStyle(inElement, inHeight, inTransition)
     {
-        var state = inElement.getAttribute(AttributeLive);
-        return ( state != "");
+        if(inTransition != null){ inElement.style.transition = inTransition; }
+        inElement.style.height = inHeight;
     }
-    return inElement.getAttribute(AttributeOpen)=="true";
-}
-
-function Collapse(inBranch, inMode, inInstant)
-{
-    inMenu = inBranch.querySelector("[data-menu]");
-    inButton = inBranch.querySelector("[data-button]");
-    var mode = inMode==null ? !GetState(inMenu) : inMode;
-    var size = (mode?inMenu.scrollHeight:0)+"px";
-
-    if(inInstant)
+    function SetState(inElement, inOpen, inTransition)
     {
-        SetState(inMenu, mode, false);
-        SetStyle(inMenu, size, "none");
+        if(inTransition == false){ inElement.setAttribute(Attributes.Live, ""); }
+        inElement.setAttribute(Attributes.Open, inOpen);
     }
-    else
+    function GetState(inElement, inTransition)
     {
-        SetState(inMenu, mode);
-        SetStyle(inMenu, inMenu.clientHeight+"px", "");
-    }
-    setTimeout(function(){ SetStyle(inMenu, size, ""); });
-    SetState(inButton, mode);
-}
-
-function Traverse(inStart, inDirection, inAttribute, inHandler)
-{
-    var selector, collection, i;
-    selector = "["+inAttribute+"]";
-    if(inDirection)
-    {
-        collection = inStart.querySelectorAll(selector)||[];
-        for(i=0; i<collection.length; i++)
+        if(inTransition != null)
         {
-            if(inHandler(collection[i]))
-            {
-                return;
-            }
+            var state = inElement.getAttribute(Attributes.Live);
+            return ( state != "");
         }
+        return inElement.getAttribute(Attributes.Open)=="true";
     }
-    else
+    function Collapse(inBranch, inMode, inInstant)
     {
-        i = inStart.parentNode;
-        while(i != document)
+        inMenu = inBranch.querySelector("["+Attributes.Menu+"]");
+        inButton = inBranch.querySelector("["+Attributes.Button+"]");
+        var mode = inMode==null ? !GetState(inMenu) : inMode;
+        var size = (mode?inMenu.scrollHeight:0)+"px";
+
+        if(inInstant)
         {
-            if(i.matches(selector))
+            SetState(inMenu, mode, false);
+            SetStyle(inMenu, size, "none");
+        }
+        else
+        {
+            SetState(inMenu, mode);
+            SetStyle(inMenu, inMenu.clientHeight+"px", "");
+        }
+        setTimeout(function(){ SetStyle(inMenu, size, ""); });
+        SetState(inButton, mode);
+    }
+    function Traverse(inStart, inDirection, inAttribute, inHandler)
+    {
+        var collection, i;
+        if(inDirection)
+        {
+            collection = inStart.querySelectorAll("["+inAttribute+"]")||[];
+            for(i=0; i<collection.length; i++)
             {
-                if(inHandler(i))
+                if(inHandler(collection[i]))
                 {
                     return;
                 }
             }
-            i = i.parentNode;
-        }
-    }
-}
-
-
-DetectTransition({
-    attrWrite: AttributeLive,
-    attrCheck: AttributeOpen,
-    onStart:function(inMenu, inEvent)
-    {
-        var heightParent, heightExtra;
-
-        heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
-
-        // TRAVERSE all parent menus
-        Traverse(inMenu, false, "data-menu", function(inParentMenu)
-        {
-            if(GetState(inParentMenu, true))
-            {
-                heightParent = parseInt(inParentMenu.style.height);
-                SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
-            }
-        });
-    },
-    onStop:function(inMenu, inEvent)
-    {
-        if(GetState(inMenu))
-        {
-            // IMPORTANT clear locked height
-            SetStyle(inMenu, "auto", "");
         }
         else
         {
-            // TRAVERSE all children
-            Traverse(inMenu, true, "data-branch", function(inBranch)
+            i = inStart.parentNode;
+            while(i != document)
             {
-                Collapse(inBranch, false, true);
-                return false;
-            });
+                if(i.hasAttribute(inAttribute))
+                {
+                    if(inHandler(i))
+                    {
+                        return;
+                    }
+                }
+                i = i.parentNode;
+            }
         }
     }
-});
-DetectAway({
-    attrRoot:"data-root",
-    onIn:function(inRoot, inEvent)
-    {
-        if(inEvent.target.hasAttribute("data-button"))
+    DetectTransition({
+        attrWrite: Attributes.Live,
+        attrCheck: Attributes.Open,
+        onStart:function(inMenu, inEvent)
         {
-            // TRAVERSE nearest parent
-            Traverse(inEvent.target, false, "data-branch", function(inBranch){
-                Collapse(inBranch, null);
-                return true;
+            var heightParent, heightExtra;
+            heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
+            Traverse(inMenu, false, Attributes.Menu, function(inParentMenu)
+            {
+                if(!GetState(inParentMenu, true)){ return; }
+                heightParent = parseInt(inParentMenu.style.height);
+                SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
             });
+        },
+        onStop:function(inMenu, inEvent)
+        {
+            if(GetState(inMenu))
+            {
+                SetStyle(inMenu, "auto", "");
+            }
+            else
+            {
+                Traverse(inMenu, true, Attributes.Branch, function(inBranch){ Collapse(inBranch, false, true); });
+            }
         }
-    },
-    onOut:function(inRoot, inEvent)
-    {
-        Collapse(inRoot, false);
-    }
+    });
+    DetectAway({
+        attrRoot:Attributes.Root,
+        onIn:function(inRoot, inEvent)
+        {
+            if(!inEvent.target.hasAttribute(Attributes.Button)){ return; }
+            Traverse(inEvent.target, false, Attributes.Branch, function(inBranch){ Collapse(inBranch, null); return true; });
+        },
+        onOut:function(inRoot, inEvent)
+        {
+            Collapse(inRoot, false);
+        }
+    });
+}
+</script>
+<script>
+SetupNav({
+      Open:"data-open",
+      Live:"data-bind",
+      Root:"data-root",
+    Branch:"data-branch",
+      Menu:"data-menu",
+    Button:"data-button"
 });
 </script>
 
