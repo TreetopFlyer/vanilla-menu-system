@@ -16,14 +16,32 @@
             }
             ul[data-open='false']
             {
-                left:-10px;
                 opacity:0;
             }
             ul[data-open='true']
             {
-                left:0px;
                 opacity:1;
             }
+
+            ul[data-open='true'][data-frame='start']
+            {
+                transition:none;
+                left:-100px;
+            }
+            ul[data-open='true'][data-frame='goal']
+            {
+                left:0px;
+            }
+            ul[data-open='false'][data-frame='start']
+            {
+                left:0px;
+            }
+            ul[data-open='false'][data-frame='goal']
+            {
+                left:100px;
+            }
+
+
         </style>
 
         <!-- tier 0 -->

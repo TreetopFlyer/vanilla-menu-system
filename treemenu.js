@@ -96,8 +96,10 @@ function TreeMenu(inAttributes)
         {
             SetState(menu, mode);
             SetStyle(menu, menu.clientHeight+"px", "");
+            menu.setAttribute("data-frame", "start");
             setTimeout(function(){
                 SetStyle(menu, size, "");
+                menu.setAttribute("data-frame", "goal");
                 InterruptParents(menu);
             });
         }
