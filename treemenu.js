@@ -11,6 +11,7 @@ function DetectTransition(inConfig)
         {
             first = true;
             keys = {};
+            inConfig.HandlerStart(t, inEvent);
         }
         else
         {
@@ -20,7 +21,6 @@ function DetectTransition(inConfig)
         if(keys[inEvent.propertyName]){return;}
         keys[inEvent.propertyName] = true;
         t.setAttribute(inConfig.AttributeWrite, JSON.stringify(keys));
-        if(first){inConfig.HandlerStart(t, inEvent);}
     };
     var handleEnd = function(inEvent)
     {
@@ -97,6 +97,18 @@ function TreeMenu(inAttributes)
         if(inTransition != null){ return inElement.getAttribute(Attributes.Live) != ""; }
         return inElement.getAttribute(Attributes.Open)=="true";
     }
+    function InterruptParents(inMenu)
+    {
+        var heightParent, heightExtra;
+        heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
+        Traverse(inMenu, false, Attributes.Menu, function(inParentMenu)
+        {
+            if(!GetState(inParentMenu, true)){ return; }
+            console.log("Height Adjust", heightExtra, inParentMenu);
+            heightParent = parseInt(inParentMenu.style.height);
+            SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
+        });
+    }
     function Collapse(inBranch, inMode, inInstant)
     {
         var menu, button, mode, size;
@@ -111,13 +123,18 @@ function TreeMenu(inAttributes)
         {
             SetState(menu, mode, false);
             SetStyle(menu, size, "none");
+            setTimeout(function(){ SetStyle(menu, size, ""); });
         }
         else
         {
             SetState(menu, mode);
             SetStyle(menu, menu.clientHeight+"px", "");
+            setTimeout(function(){
+                SetStyle(menu, size, "");
+                InterruptParents(menu);
+            });
         }
-        setTimeout(function(){ SetStyle(menu, size, ""); });
+        
         SetState(button, mode);
         return mode;
     }
@@ -148,17 +165,7 @@ function TreeMenu(inAttributes)
     DetectTransition({
         AttributeWrite: Attributes.Live,
         AttributeCheck: Attributes.Open,
-        HandlerStart:function(inMenu, inEvent)
-        {
-            var heightParent, heightExtra;
-            heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
-            Traverse(inMenu, false, Attributes.Menu, function(inParentMenu)
-            {
-                if(!GetState(inParentMenu, true)){ return; }
-                heightParent = parseInt(inParentMenu.style.height);
-                SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
-            });
-        },
+        HandlerStart:function(inMenu, inEvent){},
         HandlerStop:function(inMenu, inEvent)
         {
             if(GetState(inMenu))
@@ -180,7 +187,6 @@ function TreeMenu(inAttributes)
         {
             Traverse(inEvent.target, false, Attributes.Branch, function(inBranch)
             {
-                console.log("opening", inBranch.id);
                 toggleBranch = inBranch;
                 toggleMode = Collapse(inBranch, null);
                 return true;
@@ -193,9 +199,18 @@ function TreeMenu(inAttributes)
         var i;
         for(i=0; i<roots.length; i++)
         {
+            /*
+            root cannot collapse if:
+            - it contains the event target
+            - a parent menu is already collapsing
+            - a parent root is also eligible for collapse
+            */
             root = roots[i];
             if(!root.contains(inEvent.target))
             {
+                // this root is eligible for collapse
+
+                // check if there are any parent roots that are also eligible for collapse
                 last = root;
                 Traverse(root, false, Attributes.Root, function(inParentRoot)
                 {
@@ -205,8 +220,9 @@ function TreeMenu(inAttributes)
                     }
                 });
 
+                // check if the collapse is already happening above
                 var isAlreadyCollapsing = false;
-                Traverse(root, false, Attributes.Root, function(inParentRoot)
+                Traverse(last, false, Attributes.Root, function(inParentRoot)
                 {
                     if(inParentRoot == toggleBranch)
                     {
@@ -218,8 +234,6 @@ function TreeMenu(inAttributes)
                 {
                     Collapse(last, false);
                 }
-
-
             }
         }
     });
