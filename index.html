@@ -83,13 +83,13 @@
             <ul class="Tier0">
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
-                <li>
-                    <span>Branch</span>
-                    <ul class="Tier1" data-open="false">
+                <li data-root data-branch>
+                    <span data-button data-open="false">Branch</span>
+                    <ul class="Tier1" data-menu data-open="false">
                         <li><a href="#">Leaf</a></li>
-                        <li>
-                            <span>Branch</span>
-                            <ul class="Tier2" data-open="false">
+                        <li data-branch>
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
@@ -97,9 +97,9 @@
                         </li>
                         <li><a href="#">Leaf</a></li>
                         <li><a href="#">Leaf</a></li>
-                        <li>
-                            <span>Branch</span>
-                            <ul class="Tier2" data-open="false">
+                        <li data-branch>
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
@@ -168,14 +168,20 @@ function DetectTransition(inConfig)
         document.removeEventListener("transitionend", handleEnd);
     };
 }
-function DetectClick(inConfig)
+function DetectAway(inConfig)
 {
-    function handleClick(e)
+    function handleClick(inEvent)
     {
-        document.querySelectorAll(inConfig.selector).forEach(function(root)
+        var i;
+        var roots, root;
+        roots = document.querySelectorAll("["+inConfig.attrRoot+"]");
+        if(roots)
         {
-            (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
-        });
+            for(i=0; i<roots.length; i++)
+            {
+                (roots[i].contains(inEvent.target) ? inConfig.onIn : inConfig.onOut )(roots[i], inEvent);
+            }
+        }
     }
     document.addEventListener("click", handleClick);
     return function(){document.removeEventListener("click", handleClick);}
@@ -204,8 +210,10 @@ function GetState(inElement, inTransition)
     return inElement.getAttribute(AttributeOpen)=="true";
 }
 
-function Collapse(inMenu, inButton, inMode, inInstant)
+function Collapse(inBranch, inMode, inInstant)
 {
+    inMenu = inBranch.querySelector("[data-menu]");
+    inButton = inBranch.querySelector("[data-button]");
     var mode = inMode==null ? !GetState(inMenu) : inMode;
     var size = (mode?inMenu.scrollHeight:0)+"px";
 
@@ -223,67 +231,92 @@ function Collapse(inMenu, inButton, inMode, inInstant)
     SetState(inButton, mode);
 }
 
+function Traverse(inStart, inDirection, inAttribute, inHandler)
+{
+    var selector, collection, i;
+    selector = "["+inAttribute+"]";
+    if(inDirection)
+    {
+        collection = inStart.querySelectorAll(selector)||[];
+        for(i=0; i<collection.length; i++)
+        {
+            if(inHandler(collection[i]))
+            {
+                return;
+            }
+        }
+    }
+    else
+    {
+        i = inStart.parentNode;
+        while(i != document)
+        {
+            if(i.matches(selector))
+            {
+                if(inHandler(i))
+                {
+                    return;
+                }
+            }
+            i = i.parentNode;
+        }
+    }
+}
+
+
 DetectTransition({
     attrWrite: AttributeLive,
     attrCheck: AttributeOpen,
     onStart:function(inMenu, inEvent)
     {
-        var open, i, step;
-        open = GetState(inMenu);
+        var heightParent, heightExtra;
 
-        for(i=1; i<inEvent.path.length-3; i++)
+        heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
+
+        // TRAVERSE all parent menus
+        Traverse(inMenu, false, "data-menu", function(inParentMenu)
         {
-            // interrupt moving parents
-            step = inEvent.path[i];
-            if(GetState(step, true))
+            if(GetState(inParentMenu, true))
             {
-                height = open ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                SetStyle(step, (parseInt(step.style.height)+height)+"px");
+                heightParent = parseInt(inParentMenu.style.height);
+                SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
             }
-        }
+        });
     },
     onStop:function(inMenu, inEvent)
     {
         if(GetState(inMenu))
         {
-            // clear locked height
+            // IMPORTANT clear locked height
             SetStyle(inMenu, "auto", "");
         }
         else
         {
-            // instant transition child menus
-            inMenu.querySelectorAll("ul").forEach(function(inElement)
+            // TRAVERSE all children
+            Traverse(inMenu, true, "data-branch", function(inBranch)
             {
-                // COLLAPSE INSTANT
-                Collapse(inElement, inElement.previousElementSibling, false, true);
-            })
+                Collapse(inBranch, false, true);
+                return false;
+            });
         }
     }
 });
-DetectClick({
-    selector:"nav>ul>li",
-    onIn:function(inBranch, inEvent)
+DetectAway({
+    attrRoot:"data-root",
+    onIn:function(inRoot, inEvent)
     {
-        var menu;
-        if(inEvent.target.nodeName == "SPAN")
+        if(inEvent.target.hasAttribute("data-button"))
         {
-            menu = inEvent.target.nextElementSibling;
-            // COLLAPSE TOGGLE
-            if(menu)
-            {
-                Collapse(menu, inEvent.target, null);
-            }
+            // TRAVERSE nearest parent
+            Traverse(inEvent.target, false, "data-branch", function(inBranch){
+                Collapse(inBranch, null);
+                return true;
+            });
         }
     },
-    onOut:function(inBranch, inEvent)
+    onOut:function(inRoot, inEvent)
     {
-        var menu;
-        // COLLAPSE NORMAL
-        menu = inBranch.querySelector("ul");
-        if(menu)
-        {
-            Collapse(menu, menu.previousElementSibling, false);
-        }
+        Collapse(inRoot, false);
     }
 });
 </script>
