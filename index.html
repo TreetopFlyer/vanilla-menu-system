@@ -119,8 +119,8 @@ function DetectTransition(inConfig)
     {
         var t, keys, first;
         t = inEvent.target;
-        if(!t.hasAttribute(inConfig.attrCheck)){return;}
-        keys = t.getAttribute(inConfig.attrWrite);
+        if(!t.hasAttribute(inConfig.AttributeCheck)){return;}
+        keys = t.getAttribute(inConfig.AttributeWrite);
         if(!keys || keys == "")
         {
             first = true;
@@ -133,27 +133,27 @@ function DetectTransition(inConfig)
         }
         if(keys[inEvent.propertyName]){return;}
         keys[inEvent.propertyName] = true;
-        t.setAttribute(inConfig.attrWrite, JSON.stringify(keys));
-        if(first){inConfig.onStart(t, inEvent);}
+        t.setAttribute(inConfig.AttributeWrite, JSON.stringify(keys));
+        if(first){inConfig.HandlerStart(t, inEvent);}
     };
     var handleEnd = function(inEvent)
     {
-        var t, keys;
+        var t, keys, key;
         t = inEvent.target;
-        if(!t.hasAttribute(inConfig.attrCheck)){return;}
-        keys = t.getAttribute(inConfig.attrWrite);
+        if(!t.hasAttribute(inConfig.AttributeCheck)){return;}
+        keys = t.getAttribute(inConfig.AttributeWrite);
         keys = JSON.parse(keys);
         keys[inEvent.propertyName] = false;
-        for(var key in keys)
+        for(key in keys)
         {
             if(keys[key] == true)
             {
-                t.setAttribute(inConfig.attrWrite, JSON.stringify(keys));
+                t.setAttribute(inConfig.AttributeWrite, JSON.stringify(keys));
                 return;
             }
         }
-        t.setAttribute(inConfig.attrWrite, "");
-        inConfig.onStop(t, inEvent);
+        t.setAttribute(inConfig.AttributeWrite, "");
+        inConfig.HandlerStop(t, inEvent);
     };
     document.addEventListener("transitionrun", handleRun);
     document.addEventListener("transitionend", handleEnd);
@@ -167,21 +167,20 @@ function DetectAway(inConfig)
 {
     function handleClick(inEvent)
     {
-        var i;
-        var roots, root;
-        roots = document.querySelectorAll("["+inConfig.attrRoot+"]");
+        var i, roots;
+        roots = document.querySelectorAll("["+inConfig.AttributeRoot+"]");
         if(roots)
         {
             for(i=0; i<roots.length; i++)
             {
-                (roots[i].contains(inEvent.target) ? inConfig.onIn : inConfig.onOut )(roots[i], inEvent);
+                (roots[i].contains(inEvent.target) ? inConfig.HandlerInside : inConfig.HandlerAway )(roots[i], inEvent);
             }
         }
     }
     document.addEventListener("click", handleClick);
     return function(){document.removeEventListener("click", handleClick);}
 }
-function SetupNav(inAttributes)
+function TreeMenu(inAttributes)
 {
     var Attributes = inAttributes;
     function SetStyle(inElement, inHeight, inTransition)
@@ -196,32 +195,28 @@ function SetupNav(inAttributes)
     }
     function GetState(inElement, inTransition)
     {
-        if(inTransition != null)
-        {
-            var state = inElement.getAttribute(Attributes.Live);
-            return ( state != "");
-        }
+        if(inTransition != null){ return inElement.getAttribute(Attributes.Live) != ""; }
         return inElement.getAttribute(Attributes.Open)=="true";
     }
     function Collapse(inBranch, inMode, inInstant)
     {
-        inMenu = inBranch.querySelector("["+Attributes.Menu+"]");
-        inButton = inBranch.querySelector("["+Attributes.Button+"]");
-        var mode = inMode==null ? !GetState(inMenu) : inMode;
-        var size = (mode?inMenu.scrollHeight:0)+"px";
-
+        var menu, button, mode, size;
+        menu = inBranch.querySelector("["+Attributes.Menu+"]");
+        button = inBranch.querySelector("["+Attributes.Button+"]");
+        mode = inMode==null ? !GetState(menu) : inMode;
+        size = (mode?menu.scrollHeight:0)+"px";
         if(inInstant)
         {
-            SetState(inMenu, mode, false);
-            SetStyle(inMenu, size, "none");
+            SetState(menu, mode, false);
+            SetStyle(menu, size, "none");
         }
         else
         {
-            SetState(inMenu, mode);
-            SetStyle(inMenu, inMenu.clientHeight+"px", "");
+            SetState(menu, mode);
+            SetStyle(menu, menu.clientHeight+"px", "");
         }
-        setTimeout(function(){ SetStyle(inMenu, size, ""); });
-        SetState(inButton, mode);
+        setTimeout(function(){ SetStyle(menu, size, ""); });
+        SetState(button, mode);
     }
     function Traverse(inStart, inDirection, inAttribute, inHandler)
     {
@@ -231,10 +226,7 @@ function SetupNav(inAttributes)
             collection = inStart.querySelectorAll("["+inAttribute+"]")||[];
             for(i=0; i<collection.length; i++)
             {
-                if(inHandler(collection[i]))
-                {
-                    return;
-                }
+                if(inHandler(collection[i])){ return; }
             }
         }
         else
@@ -244,19 +236,16 @@ function SetupNav(inAttributes)
             {
                 if(i.hasAttribute(inAttribute))
                 {
-                    if(inHandler(i))
-                    {
-                        return;
-                    }
+                    if(inHandler(i)){ return; }
                 }
                 i = i.parentNode;
             }
         }
     }
     DetectTransition({
-        attrWrite: Attributes.Live,
-        attrCheck: Attributes.Open,
-        onStart:function(inMenu, inEvent)
+        AttributeWrite: Attributes.Live,
+        AttributeCheck: Attributes.Open,
+        HandlerStart:function(inMenu, inEvent)
         {
             var heightParent, heightExtra;
             heightExtra = GetState(inMenu) ? parseInt(inMenu.style.height) : - inMenu.scrollHeight;
@@ -267,7 +256,7 @@ function SetupNav(inAttributes)
                 SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
             });
         },
-        onStop:function(inMenu, inEvent)
+        HandlerStop:function(inMenu, inEvent)
         {
             if(GetState(inMenu))
             {
@@ -280,13 +269,13 @@ function SetupNav(inAttributes)
         }
     });
     DetectAway({
-        attrRoot:Attributes.Root,
-        onIn:function(inRoot, inEvent)
+        AttributeRoot:Attributes.Root,
+        HandlerInside:function(inRoot, inEvent)
         {
             if(!inEvent.target.hasAttribute(Attributes.Button)){ return; }
             Traverse(inEvent.target, false, Attributes.Branch, function(inBranch){ Collapse(inBranch, null); return true; });
         },
-        onOut:function(inRoot, inEvent)
+        HandlerAway:function(inRoot, inEvent)
         {
             Collapse(inRoot, false);
         }
@@ -294,7 +283,7 @@ function SetupNav(inAttributes)
 }
 </script>
 <script>
-SetupNav({
+TreeMenu({
       Open:"data-open",
       Live:"data-bind",
       Root:"data-root",
