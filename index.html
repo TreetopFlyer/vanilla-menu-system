@@ -12,18 +12,17 @@
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
+                transition:all 1s;
             }
             ul[data-open='false']
             {
                 left:-10px;
                 opacity:0;
-                transition:height 0.4s, opacity 0.4s, left 0.6s;
             }
             ul[data-open='true']
             {
                 left:0px;
                 opacity:1;
-                transition:height 0.4s, opacity 1.0s, left 0.6s;
             }
         </style>
 
@@ -86,11 +85,11 @@
                 <li><a href="#">Leaf</a></li>
                 <li>
                     <span>Branch</span>
-                    <ul class="Tier1" data-bind data-open="false">
+                    <ul class="Tier1" data-open="false">
                         <li><a href="#">Leaf</a></li>
                         <li>
                             <span>Branch</span>
-                            <ul class="Tier2" data-bind data-open="false">
+                            <ul class="Tier2" data-open="false">
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
@@ -100,7 +99,7 @@
                         <li><a href="#">Leaf</a></li>
                         <li>
                             <span>Branch</span>
-                            <ul class="Tier2" data-bind data-open="false">
+                            <ul class="Tier2" data-open="false">
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
@@ -115,51 +114,49 @@
 <script>
 function DetectTransition(inConfig)
 {
-    var inAttribute = inConfig.writeTo;
-    var inHandlerStart = inConfig.onStart;
-    var inHandlerStop = inConfig.onStop;
+    var isValid = function(inTarget){return }
+
     var handleRun = function(inEvent)
     {
-        var t, keys;
+        var t, keys, first;
 
         t = inEvent.target;
-        keys = t.getAttribute(inAttribute);
-        if(keys === null){return;}
-
+        if(!t.hasAttribute(inConfig.attrCheck)){return;}
+        keys = t.getAttribute(inConfig.attrWrite);
         if(!keys || keys == "")
         {
+            first = true;
             keys = {};
-            inHandlerStart(t, inEvent);
         }
         else
         {
+            first= false;
             keys = JSON.parse(keys);
         }
-
         if(keys[inEvent.propertyName]){return;}
         keys[inEvent.propertyName] = true;
-        t.setAttribute(inAttribute, JSON.stringify(keys));
+        t.setAttribute(inConfig.attrWrite, JSON.stringify(keys));
+        if(first){inConfig.onStart(t, inEvent);}
     };
     var handleEnd = function(inEvent)
     {
         var t, keys;
 
         t = inEvent.target;
-        keys = t.getAttribute(inAttribute);
-        if(keys === null){return;}
-
+        if(!t.hasAttribute(inConfig.attrCheck)){return;}
+        keys = t.getAttribute(inConfig.attrWrite);
         keys = JSON.parse(keys);
         keys[inEvent.propertyName] = false;
         for(var key in keys)
         {
             if(keys[key] == true)
             {
-                t.setAttribute(inAttribute, JSON.stringify(keys));
+                t.setAttribute(inConfig.attrWrite, JSON.stringify(keys));
                 return;
             }
         }
-        t.setAttribute(inAttribute, "");
-        inHandlerStop(t, inEvent);
+        t.setAttribute(inConfig.attrWrite, "");
+        inConfig.onStop(t, inEvent);
     };
 
     document.addEventListener("transitionrun", handleRun);
@@ -199,7 +196,11 @@ function SetState(inElement, inOpen, inTransition)
 }
 function GetState(inElement, inTransition)
 {
-    if(inTransition != null){ return (inElement.getAttribute(AttributeLive) != ""); }
+    if(inTransition != null)
+    {
+        var state = inElement.getAttribute(AttributeLive);
+        return ( state != "");
+    }
     return inElement.getAttribute(AttributeOpen)=="true";
 }
 
@@ -223,7 +224,8 @@ function Collapse(inMenu, inButton, inMode, inInstant)
 }
 
 DetectTransition({
-    writeTo: AttributeLive,
+    attrWrite: AttributeLive,
+    attrCheck: AttributeOpen,
     onStart:function(inMenu, inEvent)
     {
         var open, i, step;
@@ -236,7 +238,8 @@ DetectTransition({
                 SetStyle(inElement, "0px", "");
             });
         }
-        for(i=0; i<inEvent.path.length-3; i++)
+        
+        for(i=1; i<inEvent.path.length-3; i++)
         {
             // interrupt moving parents
             step = inEvent.path[i];
