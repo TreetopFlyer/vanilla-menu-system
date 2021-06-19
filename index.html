@@ -17,7 +17,7 @@
             ul[data-open='false']
             {
                 left:-10px;
-                opacity:0;
+                opacity:1;
             }
             ul[data-open='true']
             {
@@ -83,11 +83,11 @@
             <ul class="Tier0">
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
-                <li data-root data-branch>
+                <li data-root data-branch id="root1">
                     <span data-button data-open="false">Branch</span>
                     <ul class="Tier1" data-menu data-open="false">
                         <li><a href="#">Leaf</a></li>
-                        <li data-branch>
+                        <li data-branch data-root id="root2">
                             <span data-button data-open="false">Branch</span>
                             <ul class="Tier2" data-menu data-open="false">
                                 <li><a href="#">Leaf</a></li>
@@ -97,7 +97,7 @@
                         </li>
                         <li><a href="#">Leaf</a></li>
                         <li><a href="#">Leaf</a></li>
-                        <li data-branch>
+                        <li data-branch data-root id="root3">
                             <span data-button data-open="false">Branch</span>
                             <ul class="Tier2" data-menu data-open="false">
                                 <li><a href="#">Leaf</a></li>
@@ -111,7 +111,7 @@
             </ul>
         </nav>
 
-<script src="treemenu.min.js"></script>
+<script src="treemenu.js"></script>
 <script>
 TreeMenu({
       Open:"data-open",

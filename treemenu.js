@@ -53,13 +53,26 @@ function DetectAway(inConfig)
 {
     function handleClick(inEvent)
     {
-        var i, roots;
+        var i, roots, root, matches;
         roots = document.querySelectorAll("["+inConfig.AttributeRoot+"]");
+        matches = [];
         if(roots)
         {
             for(i=0; i<roots.length; i++)
             {
-                (roots[i].contains(inEvent.target) ? inConfig.HandlerInside : inConfig.HandlerAway )(roots[i], inEvent);
+                root = roots[i];
+                if(root.contains(inEvent.target))
+                {
+                    matches.push(root);
+                }
+                else
+                {
+                    inConfig.HandlerAway(root, inEvent);
+                }
+            }
+            if(matches.length)
+            {
+                inConfig.HandlerInside(matches, inEvent);
             }
         }
     }
@@ -89,7 +102,10 @@ function TreeMenu(inAttributes)
         var menu, button, mode, size;
         menu = inBranch.querySelector("["+Attributes.Menu+"]");
         button = inBranch.querySelector("["+Attributes.Button+"]");
-        mode = inMode==null ? !GetState(menu) : inMode;
+        var stateOriginal = GetState(menu);
+        mode = inMode==null ? !stateOriginal : inMode;
+        if(mode == stateOriginal){return;}
+
         size = (mode?menu.scrollHeight:0)+"px";
         if(inInstant)
         {
@@ -103,6 +119,7 @@ function TreeMenu(inAttributes)
         }
         setTimeout(function(){ SetStyle(menu, size, ""); });
         SetState(button, mode);
+        return mode;
     }
     function Traverse(inStart, inDirection, inAttribute, inHandler)
     {
@@ -154,16 +171,76 @@ function TreeMenu(inAttributes)
             }
         }
     });
+
+    document.addEventListener("click", function(inEvent)
+    {
+        var toggleBranch = false;
+        var toggleMode;
+        if(inEvent.target.hasAttribute(Attributes.Button))
+        {
+            Traverse(inEvent.target, false, Attributes.Branch, function(inBranch)
+            {
+                console.log("opening", inBranch.id);
+                toggleBranch = inBranch;
+                toggleMode = Collapse(inBranch, null);
+                return true;
+            });
+        }
+
+        var roots = document.querySelectorAll("["+Attributes.Root+"]");
+        var root;
+        var last;
+        var i;
+        for(i=0; i<roots.length; i++)
+        {
+            root = roots[i];
+            if(!root.contains(inEvent.target))
+            {
+                last = root;
+                Traverse(root, false, Attributes.Root, function(inParentRoot)
+                {
+                    if(!inParentRoot.contains(inEvent.target))
+                    {
+                        last = inParentRoot;
+                    }
+                });
+
+                var isAlreadyCollapsing = false;
+                Traverse(root, false, Attributes.Root, function(inParentRoot)
+                {
+                    if(inParentRoot == toggleBranch)
+                    {
+                        isAlreadyCollapsing = true;
+                        return true;
+                    }
+                });
+                if(!isAlreadyCollapsing)
+                {
+                    Collapse(last, false);
+                }
+
+
+            }
+        }
+    });
+    /*
     DetectAway({
         AttributeRoot:Attributes.Root,
         HandlerInside:function(inRoot, inEvent)
         {
             if(!inEvent.target.hasAttribute(Attributes.Button)){ return; }
-            Traverse(inEvent.target, false, Attributes.Branch, function(inBranch){ Collapse(inBranch, null); return true; });
+            Traverse(inEvent.target, false, Attributes.Branch, function(inBranch)
+            {
+                console.log("      ...toggling", inBranch.id);
+                Collapse(inBranch, null);
+                return true;
+            });
         },
         HandlerAway:function(inRoot, inEvent)
-        {
+        {   
+            //console.log("  ...collapsing", inRoot.id);
             Collapse(inRoot, false);
         }
     });
+    */
 }
