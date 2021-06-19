@@ -217,9 +217,9 @@ function Collapse(inMenu, inButton, inMode, inInstant)
     else
     {
         SetState(inMenu, mode);
-        SetStyle(inMenu, inMenu.clientHeight+"px");
-        setTimeout(function(){ SetStyle(inMenu, size); });
+        SetStyle(inMenu, inMenu.clientHeight+"px", "");
     }
+    setTimeout(function(){ SetStyle(inMenu, size, ""); });
     SetState(inButton, mode);
 }
 
@@ -230,15 +230,7 @@ DetectTransition({
     {
         var open, i, step;
         open = GetState(inMenu);
-        if(open)
-        {
-            // clear instant transitions on children
-            inMenu.querySelectorAll("ul").forEach(function(inElement)
-            {
-                SetStyle(inElement, "0px", "");
-            });
-        }
-        
+
         for(i=1; i<inEvent.path.length-3; i++)
         {
             // interrupt moving parents
@@ -255,7 +247,7 @@ DetectTransition({
         if(GetState(inMenu))
         {
             // clear locked height
-            SetStyle(inMenu, "auto");
+            SetStyle(inMenu, "auto", "");
         }
         else
         {
