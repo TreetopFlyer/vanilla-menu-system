@@ -12,18 +12,17 @@
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
+                transition:height 1s, opacity 0.4s, left 0.6s;
             }
             ul[data-open='false']
             {
                 left:-10px;
                 opacity:0;
-                transition:height 0.4s, opacity 0.4s, left 0.6s;
             }
             ul[data-open='true']
             {
                 left:0px;
                 opacity:1;
-                transition:height 0.4s, opacity 1.0s, left 0.6s;
             }
         </style>
 
@@ -84,13 +83,25 @@
             <ul class="Tier0">
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
-                <li>
-                    <span>Branch</span>
-                    <ul class="Tier1" data-bind data-open="false">
+                <li data-root data-branch id="root1">
+                    <span data-button data-open="false">Branch</span>
+                    <ul class="Tier1" data-menu data-open="false">
                         <li><a href="#">Leaf</a></li>
-                        <li>
-                            <span>Branch</span>
-                            <ul class="Tier2" data-bind data-open="false">
+                        <li data-branch data-root id="root2">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li data-branch data-root id="root3">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
                                 <li><a href="#">Leaf</a></li>
@@ -98,198 +109,21 @@
                         </li>
                         <li><a href="#">Leaf</a></li>
                         <li><a href="#">Leaf</a></li>
-                        <li>
-                            <span>Branch</span>
-                            <ul class="Tier2" data-bind data-open="false">
-                                <li><a href="#">Leaf</a></li>
-                                <li><a href="#">Leaf</a></li>
-                                <li><a href="#">Leaf</a></li>
-                            </ul>
-                        </li>
                     </ul>
                 </li>
                 <li><a href="#">Leaf</a></li>
             </ul>
         </nav>
 
+<script src="treemenu.js"></script>
 <script>
-function DetectTransition(inConfig)
-{
-    var inAttribute = inConfig.writeTo;
-    var inHandlerStart = inConfig.onStart;
-    var inHandlerStop = inConfig.onStop;
-    var handleRun = function(inEvent)
-    {
-        var t, keys;
-
-        t = inEvent.target;
-        keys = t.getAttribute(inAttribute);
-        if(keys === null){return;}
-
-        if(!keys || keys == "")
-        {
-            keys = {};
-            inHandlerStart(t, inEvent);
-        }
-        else
-        {
-            keys = JSON.parse(keys);
-        }
-
-        if(keys[inEvent.propertyName]){return;}
-        keys[inEvent.propertyName] = true;
-        t.setAttribute(inAttribute, JSON.stringify(keys));
-    };
-    var handleEnd = function(inEvent)
-    {
-        var t, keys;
-
-        t = inEvent.target;
-        keys = t.getAttribute(inAttribute);
-        if(keys === null){return;}
-
-        keys = JSON.parse(keys);
-        keys[inEvent.propertyName] = false;
-        for(var key in keys)
-        {
-            if(keys[key] == true)
-            {
-                t.setAttribute(inAttribute, JSON.stringify(keys));
-                return;
-            }
-        }
-        t.setAttribute(inAttribute, "");
-        inHandlerStop(t, inEvent);
-    };
-
-    document.addEventListener("transitionrun", handleRun);
-    document.addEventListener("transitionend", handleEnd);
-
-    return function()
-    {
-        document.removeEventListener("transitionrun", handleRun);
-        document.removeEventListener("transitionend", handleEnd);
-    };
-}
-function DetectClick(inConfig)
-{
-    function handleClick(e)
-    {
-        document.querySelectorAll(inConfig.selector).forEach(function(root)
-        {
-            (root.contains(e.target) ? inConfig.onIn : inConfig.onOut )(root, e);
-        });
-    }
-    document.addEventListener("click", handleClick);
-    return function(){document.removeEventListener("click", handleClick);}
-}
-</script>
-<script>
-var AttributeOpen = "data-open";
-var AttributeLive = "data-bind";
-function SetStyle(inElement, inHeight, inTransition)
-{
-    if(inTransition != null){ inElement.style.transition = inTransition; }
-    inElement.style.height = inHeight;
-}
-function SetState(inElement, inOpen, inTransition)
-{
-    if(inTransition == false){ inElement.setAttribute(AttributeLive, ""); }
-    inElement.setAttribute(AttributeOpen, inOpen);
-}
-function GetState(inElement, inTransition)
-{
-    if(inTransition != null){ return (inElement.getAttribute(AttributeLive) != ""); }
-    return inElement.getAttribute(AttributeOpen)=="true";
-}
-
-function Collapse(inMenu, inButton, inMode, inInstant)
-{
-    var mode = inMode==null ? !GetState(inMenu) : inMode;
-    var size = (mode?inMenu.scrollHeight:0)+"px";
-
-    if(inInstant)
-    {
-        SetState(inMenu, mode, false);
-        SetStyle(inMenu, size, "none");
-    }
-    else
-    {
-        SetState(inMenu, mode);
-        SetStyle(inMenu, inMenu.clientHeight+"px");
-        setTimeout(function(){ SetStyle(inMenu, size); });
-    }
-    SetState(inButton, mode);
-}
-
-DetectTransition({
-    writeTo: AttributeLive,
-    onStart:function(inMenu, inEvent)
-    {
-        var open, i, step;
-        open = GetState(inMenu);
-        if(open)
-        {
-            // clear instant transitions on children
-            inMenu.querySelectorAll("ul").forEach(function(inElement)
-            {
-                SetStyle(inElement, "0px", "");
-            });
-        }
-        for(i=0; i<inEvent.path.length-3; i++)
-        {
-            // interrupt moving parents
-            step = inEvent.path[i];
-            if(GetState(step, true))
-            {
-                height = open ? parseInt(inMenu.style.height) : -inMenu.scrollHeight;
-                SetStyle(step, (parseInt(step.style.height)+height)+"px");
-            }
-        }
-    },
-    onStop:function(inMenu, inEvent)
-    {
-        if(GetState(inMenu))
-        {
-            // clear locked height
-            SetStyle(inMenu, "auto");
-        }
-        else
-        {
-            // instant transition child menus
-            inMenu.querySelectorAll("ul").forEach(function(inElement)
-            {
-                // COLLAPSE INSTANT
-                Collapse(inElement, inElement.previousElementSibling, false, true);
-            })
-        }
-    }
-});
-DetectClick({
-    selector:"nav>ul>li",
-    onIn:function(inBranch, inEvent)
-    {
-        var menu;
-        if(inEvent.target.nodeName == "SPAN")
-        {
-            menu = inEvent.target.nextElementSibling;
-            // COLLAPSE TOGGLE
-            if(menu)
-            {
-                Collapse(menu, inEvent.target, null);
-            }
-        }
-    },
-    onOut:function(inBranch, inEvent)
-    {
-        var menu;
-        // COLLAPSE NORMAL
-        menu = inBranch.querySelector("ul");
-        if(menu)
-        {
-            Collapse(menu, menu.previousElementSibling, false);
-        }
-    }
+TreeMenu({
+      Open:"data-open",
+      Live:"data-bind",
+      Root:"data-root",
+    Branch:"data-branch",
+      Menu:"data-menu",
+    Button:"data-button"
 });
 </script>
 
