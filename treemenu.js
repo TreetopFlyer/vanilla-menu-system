@@ -130,7 +130,7 @@ function TreeMenu(inAttributes)
             }
         }
     }
-    DetectTransition({
+    var unbindTransition = DetectTransition({
         AttributeWrite: Attributes.Live,
         AttributeCheck: Attributes.Open,
         HandlerStop:function(inMenu, inEvent)
@@ -201,5 +201,8 @@ function TreeMenu(inAttributes)
         }
     }
     document.addEventListener("click", HandleClick);
-    return function(){ document.removeEventListener("click", HandleClick); }
+    return function(){
+        document.removeEventListener("click", HandleClick);
+        unbindTransition();
+    }
 }

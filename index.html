@@ -13,16 +13,15 @@
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
                 
-                transition-property: height, left, opacity;
-                transition-duration: 0.3s, 0.5s, 0.3s;
+                       transition-property: height,   left,     opacity;
+                       transition-duration: 0.3s,     0.3s,     0.3s;
                 transition-timing-function: ease-out, ease-out, ease-out;
-                transition-delay: 0s, 0.3s, 0s;
+                          transition-delay: 0s,       0.5s,     0.2s;
             }
             ul[data-open='false']
             {
                 left:-10px;
                 opacity:0;
-
                 transition-delay: 0.3s, 0.0s, 0.3s;
             }
             ul[data-open='true']
@@ -90,6 +89,34 @@
 
         <nav>
             <ul class="Tier0">
+                <li data-root data-branch id="root1">
+                    <span data-button data-open="false">Branch</span>
+                    <ul class="Tier1" data-menu data-open="false">
+                        <li><a href="#">Leaf</a></li>
+                        <li data-branch data-root id="root2">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li data-branch data-root id="root3">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#">Leaf</a></li>
+                        <li><a href="#">Leaf</a></li>
+                    </ul>
+                </li>
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
                 <li data-root data-branch id="root1">
