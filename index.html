@@ -6,23 +6,31 @@
             {
                 position:relative;
                 display:block;
-                padding:0;
                 margin:0;
+                padding: 0;
                 height:0;
                 overflow:hidden;
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
-                transition:height 1s, opacity 0.4s, left 0.6s;
+                
+                       transition-property: height,   left,     opacity;
+                       transition-duration: 0.3s,     0.3s,     0.3s;
+                transition-timing-function: ease-out, ease-out, ease-out;
+                          transition-delay: 0s,       0.5s,     0.2s;
             }
             ul[data-open='false']
             {
                 left:-10px;
                 opacity:0;
+                transition-delay: 0.3s, 0.0s, 0.3s;
             }
             ul[data-open='true']
             {
-                left:0px;
-                opacity:1;
+                left:0;
+            }
+            ul[data-open='false'][data-threshold='true']
+            {
+                left:10px;
             }
         </style>
 
@@ -81,6 +89,34 @@
 
         <nav>
             <ul class="Tier0">
+                <li data-root data-branch id="root1">
+                    <span data-button data-open="false">Branch</span>
+                    <ul class="Tier1" data-menu data-open="false">
+                        <li><a href="#">Leaf</a></li>
+                        <li data-branch data-root id="root2">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li data-branch data-root id="root3">
+                            <span data-button data-open="false">Branch</span>
+                            <ul class="Tier2" data-menu data-open="false">
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                                <li><a href="#">Leaf</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#">Leaf</a></li>
+                        <li><a href="#">Leaf</a></li>
+                    </ul>
+                </li>
                 <li><a href="#">Leaf</a></li>
                 <li><a href="#">Leaf</a></li>
                 <li data-root data-branch id="root1">

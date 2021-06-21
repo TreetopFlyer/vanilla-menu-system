@@ -61,7 +61,7 @@ function TreeMenu(inAttributes)
     }
     function GetState(inElement, inTransition)
     {
-        if(inTransition != null){ return inElement.getAttribute(Attributes.Live) != ""; }
+        if(inTransition === true){ return inElement.getAttribute(Attributes.Live); }
         return inElement.getAttribute(Attributes.Open)=="true";
     }
     function InterruptParents(inMenu)
@@ -71,7 +71,6 @@ function TreeMenu(inAttributes)
         Traverse(inMenu, false, Attributes.Menu, function(inParentMenu)
         {
             if(!GetState(inParentMenu, true)){ return; }
-            console.log("Height Adjust", heightExtra, inParentMenu);
             heightParent = parseInt(inParentMenu.style.height);
             SetStyle(inParentMenu, heightParent+heightExtra+"px", "");
         });
@@ -90,7 +89,9 @@ function TreeMenu(inAttributes)
         {
             SetState(menu, mode, false);
             SetStyle(menu, size, "none");
-            setTimeout(function(){ SetStyle(menu, size, ""); });
+            setTimeout(function(){
+                SetStyle(menu, size, "");
+            });
         }
         else
         {
@@ -129,18 +130,25 @@ function TreeMenu(inAttributes)
             }
         }
     }
-    DetectTransition({
+    var unbindTransition = DetectTransition({
         AttributeWrite: Attributes.Live,
         AttributeCheck: Attributes.Open,
         HandlerStop:function(inMenu, inEvent)
         {
             if(GetState(inMenu))
             {
+                inMenu.setAttribute("data-threshold", true);
                 SetStyle(inMenu, "auto", "");
             }
             else
             {
-                Traverse(inMenu, true, Attributes.Branch, function(inBranch){ Collapse(inBranch, false, true); });
+                SetStyle(inMenu, "", "none");
+                setTimeout(function(){SetStyle(inMenu, "", "")})
+                inMenu.setAttribute("data-threshold", false);
+                Traverse(inMenu, true, Attributes.Branch, function(inBranch){
+                    Collapse(inBranch, false, true);
+                    inBranch.querySelector("["+Attributes.Menu+"]").setAttribute("data-threshold", false);
+                });
             }
         }
     });
@@ -193,5 +201,8 @@ function TreeMenu(inAttributes)
         }
     }
     document.addEventListener("click", HandleClick);
-    return function(){ document.removeEventListener("click", HandleClick); }
+    return function(){
+        document.removeEventListener("click", HandleClick);
+        unbindTransition();
+    }
 }
