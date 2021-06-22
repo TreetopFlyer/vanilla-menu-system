@@ -152,6 +152,38 @@
                 <li><a href="#">Leaf</a></li>
             </ul>
         </nav>
+<style>
+    [data-get-key] {display:none;}
+    [data-get-key][data-invert] {display:block;}
+
+    [data-get-value='true'] {display:block;}
+    [data-get-value='true'][data-invert] {display:none;}
+</style>
+<script>
+    document.addEventListener("click", function(e){
+        var key, value, i, members;
+        key = e.target.getAttribute("data-set-key");
+        if(!key){return;}
+        value = e.target.getAttribute("data-set-value");
+        members = document.querySelectorAll("[data-get-key='"+key+"']");
+        for(i=0; i<members.length; i++){ members[i].setAttribute("data-get-value", value); }
+    });
+</script>
+<div>
+    <!-- todo:
+    use: <button data-set="menu1 true" data-get="menu1">off</button>
+    not: <button data-set-key="menu1" data-set-value="false" data-get-key="menu1">off</button>
+    -->
+    
+    <button data-set-key="menu1" data-set-value="true"  data-get-key="menu1" data-invert >on </button>
+    <button data-set-key="menu1" data-set-value="false" data-get-key="menu1">off</button>
+    <div data-get-key="menu1">
+        menu
+    </div>
+    <div data-get-key="menu1">
+        menu
+    </div>
+</div>
 
 <script src="treemenu.js"></script>
 <script>
