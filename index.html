@@ -154,36 +154,47 @@
         </nav>
 <style>
     [data-get] {display:none;}
-    [data-get][data-invert] {display:block;}
-
-    [data-get$=':true'] {display: block;}
-    [data-get$=':true'][data-invert] {display: none;}
+    [data-get$='true'] {display: block;}
 
 </style>
 <script>
     function channel()
     {
-        var prefix = "data-state";
+        var attrGet = "data-get"
+        var attrSet = "data-set";
         function update(inKey, inValue)
         {
-            var members = document.querySelectorAll("["+prefix+"-get^='"+inKey+"']");
-            if(inValue == "null" && members.length){ inValue = !(members[0].getAttribute(prefix+"-get").split(":")[1] == "true"); }
-            for(var i=0; i<members.length; i++){ members[i].setAttribute(prefix+"-get", inKey+":"+inValue); }
+            var members = document.querySelectorAll("["+attrGet+"^='"+inKey+"']");
+            for(var i=0; i<members.length; i++)
+            {
+                var state = members[i].getAttribute(attrGet).split(":");
+                var key = state[0]
+                var value = state[1]=="true";
+                var invert = key[key.length-1] == "!";
+                if(invert){ value = !value; }// undo the invert
+                value = (inValue=="null") ? (!value) : (inValue=="true");
+                if(invert){ value = !value; }// put the invert back
+                members[i].setAttribute(attrGet, key+":"+value);
+            }
         }
+
         function handler(e)
         {
-            var kvp = e.target.getAttribute(prefix+"-set");
+            var kvp = e.target.getAttribute(attrSet);
             if(!kvp){ return; }else{ kvp = kvp.split(":"); }
             update(kvp[0], kvp[1]);
         }
+        
         document.addEventListener("click", handler);
         return function(){document.removeEventListener("click", handler);}
     }
     var unbind = channel();
 </script>
 <div>
-    <button data-set="menu1:null" data-get="menu1" data-invert>on </button>
-    <button data-set="menu1:null" data-get="menu1">off</button>
+    <button data-set="menu1:null">
+        <span data-get="menu1!:true">On</span>
+        <span data-get="menu1">Off</span>
+    </button>
     <div data-get="menu1">
         menu
     </div>
