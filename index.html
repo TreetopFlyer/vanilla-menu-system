@@ -2,6 +2,7 @@
 <html>
     <head>
         <style>
+
             ul[data-open]
             {
                 position:relative;
@@ -13,10 +14,10 @@
                 background:rgba(128, 128, 128, 0.5);
                 border-radius:10px;
                 
-                       transition-property: height,   left,     opacity;
-                       transition-duration: 0.3s,     0.3s,     0.3s;
+                    transition-property: height,   left,     opacity;
+                    transition-duration: 0.3s,     0.3s,     0.3s;
                 transition-timing-function: ease-out, ease-out, ease-out;
-                          transition-delay: 0s,       0.5s,     0.2s;
+                        transition-delay: 0s,       0.5s,     0.2s;
             }
             ul[data-open='false']
             {
@@ -28,10 +29,11 @@
             {
                 left:0;
             }
-            ul[data-open='false'][data-threshold='true']
+            ul[data-open='false'][data-threshold]
             {
                 left:10px;
             }
+
         </style>
 
         <!-- tier 0 -->

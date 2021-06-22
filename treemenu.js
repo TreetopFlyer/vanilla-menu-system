@@ -1,6 +1,5 @@
 function DetectTransition(inConfig)
 {
-    var isValid = function(inTarget){return }
     var handleRun = function(inEvent)
     {
         var t, keys;
@@ -144,10 +143,10 @@ function TreeMenu(inAttributes)
             {
                 SetStyle(inMenu, "", "none");
                 setTimeout(function(){SetStyle(inMenu, "", "")})
-                inMenu.setAttribute("data-threshold", false);
+                inMenu.removeAttribute("data-threshold");
                 Traverse(inMenu, true, Attributes.Branch, function(inBranch){
                     Collapse(inBranch, false, true);
-                    inBranch.querySelector("["+Attributes.Menu+"]").setAttribute("data-threshold", false);
+                    inBranch.querySelector("["+Attributes.Menu+"]").removeAttribute("data-threshold");
                 });
             }
         }
