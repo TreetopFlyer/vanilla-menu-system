@@ -220,7 +220,6 @@
 var element = document.querySelector(".checker");
 element.addEventListener("transitionend", function(e)
 {
-    element.style.height="";
     element.removeAttribute("data-state-done");
 });
 function Toggle(inElement, inAttributeOpen, inAttributeMove)
@@ -238,12 +237,16 @@ function Toggle(inElement, inAttributeOpen, inAttributeMove)
     else
     {
         live = getComputedStyle(inElement);
+        // see what the height would be without any inline height
         inElement.style.height = "";
+        heightStart = live.height;
+        // see what the height would be after updating the attribute
         inElement.setAttribute(inAttributeOpen, expand);
         heightFuture = live.height;
+        // put the attribute back to how it was
         inElement.setAttribute(inAttributeOpen, !expand);
 
-        heightStart = inElement.clientHeight+"px";
+        inElement.clientHeight; // this property access in necessary to prevent instant collapse (not sure why)
         inElement.style.height = heightStart;
         inElement.setAttribute(inAttributeOpen, expand);
         inElement.setAttribute(inAttributeMove, expand ? heightStart+"|"+heightFuture : heightFuture+"|"+heightStart);
