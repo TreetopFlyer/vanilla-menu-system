@@ -221,15 +221,15 @@
 </div>
 <script>
 
-function UpdateAndBlend(inElement, inAttributeOpen)
+function UpdateAndBlend(inElement, inAttributeOpen, inMode)
 {
     var interrupt, expand, live, heightStart, heightFuture;
     var attrCache = "data-transition-cache";
 
     interrupt = inElement.getAttribute(attrCache);
     expand = !(inElement.getAttribute(inAttributeOpen) == "true");
-    
-    
+    if(inMode == !expand){ return; }
+
     function done(inEvent)
     {
         if(inEvent.target != inEvent.srcElement || inEvent.propertyName != "height"){ return; }
@@ -251,12 +251,7 @@ function UpdateAndBlend(inElement, inAttributeOpen)
         heightFuture = live.height;
         inElement.setAttribute(inAttributeOpen, !expand);
         inElement.clientHeight; // this property access in necessary to prevent instant collapse (not sure why)
-
-        if(heightStart == heightFuture)
-        {
-            return;
-        }
-
+        if(heightStart == heightFuture){ return; }
         inElement.addEventListener("transitionend", done);
         inElement.style.height = heightStart;
         inElement.setAttribute(inAttributeOpen, expand);
