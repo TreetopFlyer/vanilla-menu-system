@@ -156,43 +156,33 @@
     [data-get] {display:none;}
     [data-get$='true'] {display: block;}
 
+    [data-get][data-invert] {display:block;}
+    [data-get$='true'][data-invert] {display: none;}
 </style>
 <script>
-    function channel()
+    function channel(inAttrGet, inAttrSet)
     {
-        var attrGet = "data-get"
-        var attrSet = "data-set";
-        function update(inKey, inValue)
+        function update(inElement)
         {
-            var members = document.querySelectorAll("["+attrGet+"^='"+inKey+"']");
-            for(var i=0; i<members.length; i++)
-            {
-                var state = members[i].getAttribute(attrGet).split(":");
-                var key = state[0]
-                var value = state[1]=="true";
-                var invert = key[key.length-1] == "!";
-                if(invert){ value = !value; }// undo the invert
-                value = (inValue=="null") ? (!value) : (inValue=="true");
-                if(invert){ value = !value; }// put the invert back
-                members[i].setAttribute(attrGet, key+":"+value);
-            }
-        }
-
-        function handler(e)
-        {
-            var kvp = e.target.getAttribute(attrSet);
+            var kvp, members, i;
+            kvp = inElement.getAttribute(inAttrSet);
             if(!kvp){ return; }else{ kvp = kvp.split(":"); }
-            update(kvp[0], kvp[1]);
+            members = document.querySelectorAll("["+inAttrGet+"^='"+kvp[0]+"']");
+            if(kvp[1] == "null" && members.length){ kvp[1] = !(members[0].getAttribute(inAttrGet).split(":")[1] == "true"); }
+            for(i=0; i<members.length; i++){ members[i].setAttribute(inAttrGet, kvp[0]+":"+kvp[1]); }
         }
-        
+        function handler(inEvent)
+        {
+            for(var i=0; i<inEvent.path.length-3; i++){ update(inEvent.path[i]); }
+        }
         document.addEventListener("click", handler);
         return function(){document.removeEventListener("click", handler);}
     }
-    var unbind = channel();
+    var unbind = channel("data-get", "data-set");
 </script>
 <div>
     <button data-set="menu1:null">
-        <span data-get="menu1!:true">On</span>
+        <span data-get="menu1" data-invert>On</span>
         <span data-get="menu1">Off</span>
     </button>
     <div data-get="menu1">
