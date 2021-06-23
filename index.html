@@ -200,12 +200,13 @@
     height:0px;
     overflow:hidden;
     background:yellow;
-    border:2px solid black;
-    transition:height 0.5s;
+    border:8px solid red;
+    transition:height 1s;
 }
 .checker[data-state-open='true']
 {
     height:auto;
+    border-color:green;
 }
 </style>
 <div class="checker" onclick="t()">
@@ -217,37 +218,37 @@
 <script>
 
 var element = document.querySelector(".checker");
-
 element.addEventListener("transitionend", function(e)
 {
-    console.log("done");
     element.style.height="";
+    element.removeAttribute("data-state-done");
 });
-
-function Toggle(inElement, inAttributeOpen, inAttributeDone)
+function Toggle(inElement, inAttributeOpen, inAttributeMove)
 {
-    var interrupt, expand, live, heightBefore, heightAfter;
+    var interrupt, expand, live, heightStart, heightFuture;
 
-    expand =  !(inElement.getAttribute(inAttributeOpen) == "true");
-    live = getComputedStyle(inElement);
-
-    // take measurements
-    heightBefore = live.height;
-    inElement.setAttribute(inAttributeOpen, expand);
-    heightAfter = live.height;
-    inElement.setAttribute(inAttributeOpen, !expand);
-
-    // setup
-    inElement.style.height = inElement.clientHeight+"px";
-    console.log(inElement.clientHeight+"px", heightAfter);
-    setTimeout(function()
+    interrupt = inElement.getAttribute(inAttributeMove);
+    expand = !(inElement.getAttribute(inAttributeOpen) == "true");
+    
+    if(interrupt)
     {
-        // trnasition
-        inElement.style.height = heightAfter;
+        inElement.style.height = expand ? interrupt.split("|")[1] : interrupt.split("|")[0];
         inElement.setAttribute(inAttributeOpen, expand);
+    }
+    else
+    {
+        live = getComputedStyle(inElement);
+        inElement.style.height = "";
+        inElement.setAttribute(inAttributeOpen, expand);
+        heightFuture = live.height;
+        inElement.setAttribute(inAttributeOpen, !expand);
 
-    });
-
+        heightStart = inElement.clientHeight+"px";
+        inElement.style.height = heightStart;
+        inElement.setAttribute(inAttributeOpen, expand);
+        inElement.setAttribute(inAttributeMove, expand ? heightStart+"|"+heightFuture : heightFuture+"|"+heightStart);
+        setTimeout(function(){inElement.style.height = heightFuture;});
+    }
 }
 
 let t = () => Toggle(element, "data-state-open", "data-state-done");
