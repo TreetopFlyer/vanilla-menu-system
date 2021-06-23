@@ -152,6 +152,8 @@
                 <li><a href="#">Leaf</a></li>
             </ul>
         </nav>
+
+
 <style>
     [data-get] {display:none;}
     [data-get$='true'] {display: block;}
@@ -190,6 +192,69 @@
     </div>
 </div>
 
+
+
+<style>
+.checker{
+    width:100px;
+    height:0px;
+    overflow:hidden;
+    background:yellow;
+    border:2px solid black;
+    transition:height 0.5s;
+}
+.checker[data-state-open='true']
+{
+    height:auto;
+}
+</style>
+<div class="checker" onclick="t()">
+    <p>
+        sigespegse<br/>
+        se;gojseh.
+    </p>
+</div>
+<script>
+
+var element = document.querySelector(".checker");
+
+element.addEventListener("transitionend", function(e)
+{
+    console.log("done");
+    element.style.height="";
+});
+
+function Toggle(inElement, inAttributeOpen, inAttributeDone)
+{
+    var interrupt, expand, live, heightBefore, heightAfter;
+
+    expand =  !(inElement.getAttribute(inAttributeOpen) == "true");
+    live = getComputedStyle(inElement);
+
+    // take measurements
+    heightBefore = live.height;
+    inElement.setAttribute(inAttributeOpen, expand);
+    heightAfter = live.height;
+    inElement.setAttribute(inAttributeOpen, !expand);
+
+    // setup
+    inElement.style.height = inElement.clientHeight+"px";
+    console.log(inElement.clientHeight+"px", heightAfter);
+    setTimeout(function()
+    {
+        // trnasition
+        inElement.style.height = heightAfter;
+        inElement.setAttribute(inAttributeOpen, expand);
+
+    });
+
+}
+
+let t = () => Toggle(element, "data-state-open", "data-state-done");
+
+</script>
+
+<!--
 <script src="treemenu.js"></script>
 <script>
 TreeMenu({
@@ -201,6 +266,7 @@ TreeMenu({
     Button:"data-button"
 });
 </script>
+-->
 
     </body>
 </html>
