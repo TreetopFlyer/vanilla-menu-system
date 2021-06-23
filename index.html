@@ -161,25 +161,21 @@
 
 </style>
 <script>
-    function channel()
+    function channel(inAttrGet, inAttrSet)
     {
-        var prefix = "data-state";
-        function update(inKey, inValue)
-        {
-            var members = document.querySelectorAll("["+prefix+"-get^='"+inKey+"']");
-            if(inValue == "null" && members.length){ inValue = !(members[0].getAttribute(prefix+"-get").split(":")[1] == "true"); }
-            for(var i=0; i<members.length; i++){ members[i].setAttribute(prefix+"-get", inKey+":"+inValue); }
-        }
         function handler(e)
         {
-            var kvp = e.target.getAttribute(prefix+"-set");
+            var kvp, members, i
+            kvp = e.target.getAttribute(inAttrSet);
             if(!kvp){ return; }else{ kvp = kvp.split(":"); }
-            update(kvp[0], kvp[1]);
+            members = document.querySelectorAll("["+inAttrGet+"^='"+kvp[0]+"']");
+            if(kvp[1] == "null" && members.length){ kvp[1] = !(members[0].getAttribute(inAttrGet).split(":")[1] == "true"); }
+            for(i=0; i<members.length; i++){ members[i].setAttribute(inAttrGet, kvp[0]+":"+kvp[1]); }
         }
         document.addEventListener("click", handler);
         return function(){document.removeEventListener("click", handler);}
     }
-    var unbind = channel();
+    var unbind = channel("data-get", "data-set");
 </script>
 <div>
     <button data-set="menu1:null" data-get="menu1" data-invert>on </button>
