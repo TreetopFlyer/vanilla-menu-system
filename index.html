@@ -201,9 +201,10 @@
     height:0px;
     opacity: 0.5;
     overflow:hidden;
+    opacity:0.2;
     background:yellow;
-    border:8px solid black;
-    transition:opacity 0.3s, height 1s;
+    border:8px solid red;
+    transition:height 1s, opacity 0.5s;
 }
 .collapse[data-state-open='true']
 {
@@ -212,23 +213,31 @@
     border-color:green;
 }
 </style>
-<div class="collapse" onclick="UpdateBlend(this, 'data-state-open', null)">
-    <p>paragraph</p>
+<div class="collapse" onclick="UpdateAndBlend(this, 'data-state-open')">
+    <p>
+        sigespegse<br/>
+        se;gojseh.
+    </p>
 </div>
 <script>
-function UpdateBlend(inElement, inAttributeOpen, inMode)
+
+function UpdateAndBlend(inElement, inAttributeOpen)
 {
     var interrupt, expand, live, heightStart, heightFuture;
-    var inAttributeMove = "data-transition-cache";
-    interrupt = inElement.getAttribute(inAttributeMove);
+    var attrCache = "data-transition-cache";
+
+    interrupt = inElement.getAttribute(attrCache);
     expand = !(inElement.getAttribute(inAttributeOpen) == "true");
-    if(inMode == !expand){ return; }
+    
+    
     function done(inEvent)
     {
-        if(inEvent.target != inElement || inEvent.propertyName == "height"){ return; }
+        if(inEvent.target != inEvent.srcElement || inEvent.propertyName != "height"){ return; }
         inEvent.target.removeEventListener("transitionend", done);
-        inEvent.target.removeAttribute(inAttributeMove);
+        inEvent.target.removeAttribute(attrCache);
+        inElement.style.height = "";
     }
+
     if(interrupt)
     {
         inElement.style.height = expand ? interrupt.split("|")[1] : interrupt.split("|")[0];
@@ -237,20 +246,25 @@ function UpdateBlend(inElement, inAttributeOpen, inMode)
     else
     {
         live = getComputedStyle(inElement);
-        inElement.style.height = "";
         heightStart = live.height;
         inElement.setAttribute(inAttributeOpen, expand);
         heightFuture = live.height;
         inElement.setAttribute(inAttributeOpen, !expand);
-        inElement.clientHeight;
-        inElement.setAttribute(inAttributeOpen, expand);
-        if(heightStart == heightFuture){ return; }
-        inElement.style.height = heightStart;
-        inElement.setAttribute(inAttributeMove, expand ? heightStart+"|"+heightFuture : heightFuture+"|"+heightStart);
+        inElement.clientHeight; // this property access in necessary to prevent instant collapse (not sure why)
+
+        if(heightStart == heightFuture)
+        {
+            return;
+        }
+
         inElement.addEventListener("transitionend", done);
+        inElement.style.height = heightStart;
+        inElement.setAttribute(inAttributeOpen, expand);
+        inElement.setAttribute(attrCache, expand ? heightStart+"|"+heightFuture : heightFuture+"|"+heightStart);
         setTimeout(function(){inElement.style.height = heightFuture;});
     }
 }
+
 </script>
 
 <!--
