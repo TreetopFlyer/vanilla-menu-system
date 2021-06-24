@@ -132,9 +132,6 @@ function UpdateAndBlend(inElement, inAttributeOpen, inMode, inHandler)
     <body>
 
 
-        <div class="lerp-layer">
-            <div id="box3">3</div>
-        </div>
 
         <div>
             <div class="col">
@@ -144,6 +141,11 @@ function UpdateAndBlend(inElement, inAttributeOpen, inMode, inHandler)
             <div class="col">
                 right
                 <div id="box2" onclick="match(b)">2</div>
+                
+                <div class="lerp-layer">
+                    <div id="box3">3</div>
+                </div>
+
             </div>
         </div>
 
@@ -153,21 +155,34 @@ function UpdateAndBlend(inElement, inAttributeOpen, inMode, inHandler)
         a = document.querySelector("#box1");
         b = document.querySelector("#box2");
         c = document.querySelector("#box3");
-
-        aR = a.getBoundingClientRect();
-        bR = b.getBoundingClientRect();
+        l = document.querySelector(".lerp-layer");
 
         let match = to =>
         {
-            var body = document.body.getBoundingClientRect();
-            c.parentElement.style.top = -body.top+"px";
-            var r = to.getBoundingClientRect();
+            var bR = document.body.getBoundingClientRect();
+            var pR = l.offsetParent.getBoundingClientRect();
+            var lR = l.getBoundingClientRect();
             
+            // move the lerp-layer so its in the top left corner of the screen
+            // this works if the lerp-layer is an immediate child of the body:
+            l.style.top = -bR.top+"px";
+            
+            function subtract(a, b){return {left:a.left-b.left, top:a.top-b.top}; }
+
+            
+
+
+            lerpLocal = {x:lR.left-pR.left, y:lR.top-pR.top};
+            lerpWorld = {x:lR.left-bR.left, y:lR.top-bR.top}
+            // we want to zero-out the world coords, but we have to do it in local coords
+
+
+            var r = to.getBoundingClientRect();
             s = getComputedStyle(to);
-            c.style.left   = r.left+"px";
-            c.style.top    = r.top+"px";
-            c.style.width  = r.width+"px";
-            c.style.height = r.height+"px";
+            c.style.left         = r.left+"px";
+            c.style.top          = r.top+"px";
+            c.style.width        = r.width+"px";
+            c.style.height       = r.height+"px";
             c.style.background   = s.background;
             c.style.border       = s.border;
             c.style.borderRadius = s.borderRadius;
