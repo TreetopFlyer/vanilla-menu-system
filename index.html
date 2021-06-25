@@ -122,7 +122,8 @@ function UpdateAndBlend(inElement, inAttributeOpen, inMode, inHandler)
                 left:0;
                 width:10px;
                 height:10px;
-                border: 1px solid black;
+                
+                background:black;
                 border-radius:5px;
                 transition:top 0.5s;
             }
@@ -159,24 +160,10 @@ function UpdateAndBlend(inElement, inAttributeOpen, inMode, inHandler)
 
         let match = to =>
         {
-            var bR = document.body.getBoundingClientRect();
             var pR = l.offsetParent.getBoundingClientRect();
-            var lR = l.getBoundingClientRect();
+            l.style.top  = -pR.top+"px";
+            l.style.left = -pR.left+"px";
             
-            // move the lerp-layer so its in the top left corner of the screen
-            // this works if the lerp-layer is an immediate child of the body:
-            l.style.top = -bR.top+"px";
-            
-            function subtract(a, b){return {left:a.left-b.left, top:a.top-b.top}; }
-
-            
-
-
-            lerpLocal = {x:lR.left-pR.left, y:lR.top-pR.top};
-            lerpWorld = {x:lR.left-bR.left, y:lR.top-bR.top}
-            // we want to zero-out the world coords, but we have to do it in local coords
-
-
             var r = to.getBoundingClientRect();
             s = getComputedStyle(to);
             c.style.left         = r.left+"px";
